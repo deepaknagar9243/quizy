@@ -26,7 +26,7 @@ export class AuthService {
     const isAdmin = email === 'admin@quiz.com';
     const user: User = {
       id: isAdmin ? 'admin_user' : 'current_user_' + email.split('@')[0],
-      name: isAdmin ? 'Admin User' : 'Rahul Kumar',
+      name: isAdmin ? 'Admin User' : 'Deepak ',
       email,
       mobile: '9876543210',
       avatar: isAdmin ? 'AD' : 'RK',
