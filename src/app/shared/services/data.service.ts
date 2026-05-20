@@ -323,7 +323,9 @@ export class DataService {
       totalRevenue: 854200,
       activePlayers: 1247,
       todaySignups: 156,
-      todayRevenue: 28500
+      todayRevenue: 28500,
+      totalWithdrawals: 4230,
+      pendingWithdrawals: 12
     };
   }
 

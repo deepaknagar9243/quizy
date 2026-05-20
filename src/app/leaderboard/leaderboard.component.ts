@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../shared/services/data.service';
+import { StateService } from '../shared/services/state.service';
 import { LeaderboardEntry } from '../shared/models/models';
 
 @Component({
@@ -96,10 +97,10 @@ export class LeaderboardComponent implements OnInit {
   leaderboard: LeaderboardEntry[] = [];
   topThree: LeaderboardEntry[] = [];
 
-  constructor(private data: DataService) {}
+  constructor(private data: DataService, private state: StateService) {}
 
   ngOnInit() {
-    this.leaderboard = this.data.getLeaderboard();
+    this.leaderboard = this.state.leaderboard();
     this.topThree = this.leaderboard.slice(0, 3);
   }
 

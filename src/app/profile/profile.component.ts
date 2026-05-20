@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../shared/services/auth.service';
+import { StateService } from '../shared/services/state.service';
 
 @Component({
   selector: 'app-profile',
@@ -103,11 +104,11 @@ import { AuthService } from '../shared/services/auth.service';
             <div class="text-muted text-xs mt-1">Quizzes Played</div>
           </div>
           <div class="text-center p-4 rounded-xl bg-green-50 border border-green-100">
-            <div class="text-2xl font-bold text-green-600">{{ user()?.totalWins }}</div>
-            <div class="text-muted text-xs mt-1">Total Wins</div>
+            <div class="text-2xl font-bold text-green-600">₹{{ user()?.totalEarnings?.toLocaleString('en-IN') }}</div>
+            <div class="text-muted text-xs mt-1">Total Earned</div>
           </div>
           <div class="text-center p-4 rounded-xl bg-yellow-50 border border-yellow-100">
-            <div class="text-2xl font-bold text-yellow-600">33%</div>
+            <div class="text-2xl font-bold text-yellow-600">{{ winRate() }}%</div>
             <div class="text-muted text-xs mt-1">Win Rate</div>
           </div>
           <div class="text-center p-4 rounded-xl bg-purple-50 border border-purple-100">
@@ -160,8 +161,15 @@ export class ProfileComponent {
   editEmail = '';
   editMobile = '';
   user = this.auth.currentUser;
+  quizHistory = computed(() => this.state.getUserQuizResults(this.user()?.id || '').slice(0, 5));
+  winRate = computed(() => {
+    const results = this.state.getUserQuizResults(this.user()?.id || '');
+    if (!results.length) return 0;
+    const wins = results.filter(r => r.rank <= 3).length;
+    return Math.round((wins / results.length) * 100);
+  });
 
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, public state: StateService) {}
 
   saveProfile() { this.editMode.set(false); }
   logout() { this.auth.logout(); }

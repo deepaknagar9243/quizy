@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../shared/services/auth.service';
 import { DataService } from '../shared/services/data.service';
+import { StateService } from '../shared/services/state.service';
 import { Quiz, LeaderboardEntry, Winner } from '../shared/models/models';
 
 @Component({
@@ -223,13 +224,13 @@ export class DashboardComponent implements OnInit {
 
   user = this.auth.currentUser;
 
-  constructor(private auth: AuthService, private data: DataService) {}
+  constructor(private auth: AuthService, private data: DataService, private state: StateService) {}
 
   ngOnInit() {
     this.liveQuiz = this.data.getLiveQuiz();
     this.upcomingQuizzes = this.data.getUpcomingQuizzes();
-    this.topPlayers = this.data.getLeaderboard().slice(0, 5);
-    this.recentWinners = this.data.getRecentWinners().slice(0, 4);
+    this.topPlayers = this.state.leaderboard().slice(0, 5);
+    this.recentWinners = this.state.recentWinners().slice(0, 4);
   }
 
   formatTime(dateStr: string): string {

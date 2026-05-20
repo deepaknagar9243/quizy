@@ -1,9 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../shared/services/auth.service';
-import { DataService } from '../shared/services/data.service';
-import { Transaction } from '../shared/models/models';
+import { StateService } from '../shared/services/state.service';
+import { ApiService } from '../shared/services/api.service';
+import { Transaction, PaymentRequest, WithdrawalRequest } from '../shared/models/models';
 
 @Component({
   selector: 'app-wallet',
@@ -19,18 +20,20 @@ import { Transaction } from '../shared/models/models';
       <!-- Balance Card -->
       <div class="glass-card p-6 relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-red-50 to-transparent pointer-events-none"></div>
-        <div class="relative">
-          <p class="text-muted text-sm mb-1">Available Balance</p>
-          <div class="text-4xl font-bold text-slate-800 mb-1">₹{{ user()?.walletBalance?.toLocaleString('en-IN') }}</div>
-          <p class="text-muted text-sm">Last updated just now</p>
-          <div class="flex flex-wrap gap-3 mt-5">
-            <button class="btn-primary" (click)="showDepositModal.set(true)">
+        <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div>
+            <p class="text-muted text-sm mb-1">Available Balance</p>
+            <div class="text-4xl font-bold text-slate-800">₹{{ user()?.walletBalance?.toLocaleString('en-IN') }}</div>
+            <p class="text-muted text-xs mt-1">Withdrawable: ₹{{ withdrawable().toLocaleString('en-IN') }}</p>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button class="btn-primary" (click)="openDeposit()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
               </svg>
               Add Money
             </button>
-            <button class="btn-secondary" (click)="showWithdrawModal.set(true)">
+            <button class="btn-secondary" (click)="openWithdraw()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
               </svg>
@@ -40,195 +43,383 @@ import { Transaction } from '../shared/models/models';
         </div>
       </div>
 
-      <!-- Quick Stats -->
+      <!-- Stats -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="stat-card">
           <div class="text-muted text-xs mb-2">Total Deposited</div>
-          <div class="text-xl font-bold text-slate-800">₹1,500</div>
+          <div class="text-xl font-bold text-slate-800">₹{{ totalDeposited().toLocaleString('en-IN') }}</div>
         </div>
         <div class="stat-card">
           <div class="text-muted text-xs mb-2">Total Withdrawn</div>
-          <div class="text-xl font-bold text-slate-800">₹3,000</div>
+          <div class="text-xl font-bold text-slate-800">₹{{ totalWithdrawn().toLocaleString('en-IN') }}</div>
         </div>
         <div class="stat-card">
           <div class="text-muted text-xs mb-2">Prize Earnings</div>
-          <div class="text-xl font-bold text-green-600">₹8,550</div>
+          <div class="text-xl font-bold text-green-600">₹{{ totalPrize().toLocaleString('en-IN') }}</div>
         </div>
         <div class="stat-card">
           <div class="text-muted text-xs mb-2">Entry Fees Paid</div>
-          <div class="text-xl font-bold text-red-500">₹300</div>
+          <div class="text-xl font-bold text-red-500">₹{{ totalFees().toLocaleString('en-IN') }}</div>
         </div>
       </div>
 
-      <!-- Transaction History -->
+      <!-- Transactions -->
       <div class="glass-card overflow-hidden">
         <div class="p-5 border-b border-slate-200 flex items-center justify-between">
           <h3 class="text-slate-800 font-bold">Transaction History</h3>
-          <span class="text-muted text-sm">{{ transactions.length }} transactions</span>
+          <div class="flex items-center gap-3">
+            <select class="input-field py-1.5 text-xs w-auto" [(ngModel)]="txFilter">
+              <option value="">All</option>
+              <option value="deposit">Deposits</option>
+              <option value="withdrawal">Withdrawals</option>
+              <option value="prize">Prizes</option>
+              <option value="entry_fee">Entry Fees</option>
+            </select>
+            <span class="text-muted text-sm">{{ filteredTx().length }}</span>
+          </div>
         </div>
 
+        @if (filteredTx().length === 0) {
+          <div class="p-12 text-center text-muted">No transactions found</div>
+        }
+
         <div class="divide-y divide-slate-100">
-          @for (tx of transactions; track tx.id) {
+          @for (tx of filteredTx(); track tx.id) {
             <div class="px-5 py-4 flex items-center gap-4 table-row">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                [class]="getTxIconClass(tx.type)">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+                [class]="getTxBg(tx.type)">
                 {{ getTxIcon(tx.type) }}
               </div>
               <div class="flex-1 min-w-0">
                 <div class="text-slate-800 font-medium text-sm truncate">{{ tx.description }}</div>
-                <div class="text-muted text-xs mt-0.5">{{ formatDate(tx.date) }}</div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-muted text-xs">{{ formatDate(tx.date) }}</span>
+                  @if (tx.reference) {
+                    <span class="text-xs text-slate-400">· {{ tx.reference }}</span>
+                  }
+                </div>
               </div>
               <div class="text-right flex-shrink-0">
                 <div class="font-bold text-sm" [class]="tx.amount > 0 ? 'text-green-600' : 'text-red-500'">
                   {{ tx.amount > 0 ? '+' : '' }}₹{{ Math.abs(tx.amount).toLocaleString('en-IN') }}
                 </div>
-                <div class="text-xs mt-0.5"
-                  [class]="tx.status === 'success' ? 'text-green-600' : tx.status === 'pending' ? 'text-yellow-600' : 'text-red-500'">
+                <span class="text-xs px-2 py-0.5 rounded-full mt-0.5 inline-block"
+                  [class]="tx.status === 'success' ? 'bg-green-50 text-green-600' : tx.status === 'pending' ? 'bg-yellow-50 text-yellow-600' : 'bg-red-50 text-red-500'">
                   {{ tx.status }}
-                </div>
+                </span>
               </div>
             </div>
           }
         </div>
       </div>
 
-      <!-- Deposit Modal -->
-      @if (showDepositModal()) {
+      <!-- ── DEPOSIT MODAL ── -->
+      @if (showDeposit()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div class="glass-card p-6 w-full max-w-md">
-            <h3 class="text-slate-800 font-bold text-lg mb-4">Add Money to Wallet</h3>
+          <div class="glass-card p-6 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between mb-5">
+              <h3 class="text-slate-800 font-bold text-lg">Add Money to Wallet</h3>
+              <button class="text-slate-400 hover:text-slate-600 text-xl" (click)="showDeposit.set(false)">✕</button>
+            </div>
 
+            <!-- Quick amounts -->
             <div class="grid grid-cols-3 gap-2 mb-4">
-              @for (amount of quickAmounts; track amount) {
-                <button class="btn-secondary py-2 text-sm justify-center" (click)="depositAmount = amount">
-                  ₹{{ amount }}
+              @for (amt of quickAmounts; track amt) {
+                <button class="py-2 text-sm rounded-lg border font-medium transition-all"
+                  [class]="depositAmt === amt ? 'border-red-500 bg-red-50 text-red-600' : 'border-slate-200 text-slate-600 hover:border-red-300'"
+                  (click)="depositAmt = amt">
+                  ₹{{ amt.toLocaleString('en-IN') }}
                 </button>
               }
             </div>
 
             <div class="mb-4">
-              <label class="block text-sm font-medium text-slate-600 mb-2">Custom Amount</label>
-              <input type="number" class="input-field" placeholder="Enter amount" [(ngModel)]="depositAmount" />
+              <label class="block text-sm font-medium text-slate-600 mb-2">Custom Amount (Min ₹10)</label>
+              <input type="number" class="input-field" placeholder="Enter amount" [(ngModel)]="depositAmt" min="10" />
             </div>
 
+            <!-- Payment method -->
             <div class="mb-5">
               <label class="block text-sm font-medium text-slate-600 mb-3">Payment Method</label>
               <div class="space-y-2">
-                @for (method of paymentMethods; track method.id) {
-                  <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer"
-                    [class]="selectedMethod === method.id ? 'border-red-400 bg-red-50' : 'border-slate-200 hover:border-slate-300'">
-                    <input type="radio" name="payMethod" [value]="method.id" [(ngModel)]="selectedMethod" class="hidden"/>
-                    <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-base">{{ method.icon }}</div>
-                    <div>
-                      <div class="text-slate-800 text-sm font-medium">{{ method.name }}</div>
-                      <div class="text-muted text-xs">{{ method.desc }}</div>
+                @for (m of paymentMethods; track m.id) {
+                  <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                    [class]="depositMethod === m.id ? 'border-red-400 bg-red-50' : 'border-slate-200 hover:border-slate-300'">
+                    <input type="radio" [value]="m.id" [(ngModel)]="depositMethod" class="hidden"/>
+                    <span class="text-xl">{{ m.icon }}</span>
+                    <div class="flex-1">
+                      <div class="text-slate-800 text-sm font-medium">{{ m.name }}</div>
+                      <div class="text-muted text-xs">{{ m.desc }}</div>
                     </div>
-                    @if (selectedMethod === method.id) {
-                      <span class="ml-auto text-red-500">✓</span>
-                    }
+                    @if (depositMethod === m.id) { <span class="text-red-500 font-bold">✓</span> }
                   </label>
                 }
               </div>
             </div>
 
+            <!-- UPI ID field -->
+            @if (depositMethod === 'upi') {
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-600 mb-2">UPI ID</label>
+                <input type="text" class="input-field" placeholder="yourname@upi" [(ngModel)]="upiId" />
+              </div>
+            }
+
+            @if (depositError()) {
+              <div class="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{{ depositError() }}</div>
+            }
+
             <div class="flex gap-3">
-              <button class="btn-secondary flex-1 justify-center" (click)="showDepositModal.set(false)">Cancel</button>
-              <button class="btn-primary flex-1 justify-center" (click)="processDeposit()">
-                Pay ₹{{ depositAmount || 0 }}
+              <button class="btn-secondary flex-1 justify-center" (click)="showDeposit.set(false)" [disabled]="processing()">Cancel</button>
+              <button class="btn-primary flex-1 justify-center" (click)="processDeposit()" [disabled]="processing() || !depositAmt || depositAmt < 10">
+                @if (processing()) {
+                  <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                }
+                Pay ₹{{ (depositAmt || 0).toLocaleString('en-IN') }}
               </button>
             </div>
           </div>
         </div>
       }
 
-      <!-- Withdraw Modal -->
-      @if (showWithdrawModal()) {
+      <!-- ── WITHDRAW MODAL ── -->
+      @if (showWithdraw()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div class="glass-card p-6 w-full max-w-md">
-            <h3 class="text-slate-800 font-bold text-lg mb-4">Withdraw Funds</h3>
-            <p class="text-muted text-sm mb-4">Available: ₹{{ user()?.walletBalance?.toLocaleString('en-IN') }}</p>
+          <div class="glass-card p-6 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between mb-5">
+              <h3 class="text-slate-800 font-bold text-lg">Withdraw Funds</h3>
+              <button class="text-slate-400 hover:text-slate-600 text-xl" (click)="showWithdraw.set(false)">✕</button>
+            </div>
 
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-slate-600 mb-2">Withdrawal Amount</label>
-              <input type="number" class="input-field" placeholder="Enter amount" [(ngModel)]="withdrawAmount" />
+            <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4 flex justify-between">
+              <span class="text-muted text-sm">Available to withdraw</span>
+              <span class="text-slate-800 font-bold">₹{{ withdrawable().toLocaleString('en-IN') }}</span>
             </div>
 
             <div class="mb-4">
-              <label class="block text-sm font-medium text-slate-600 mb-2">Bank Account / UPI</label>
-              <input type="text" class="input-field" placeholder="Enter UPI ID or account number" [(ngModel)]="withdrawAccount" />
+              <label class="block text-sm font-medium text-slate-600 mb-2">Withdrawal Method</label>
+              <div class="flex gap-2">
+                <button class="flex-1 py-2 rounded-lg border text-sm font-medium transition-all"
+                  [class]="withdrawMethod === 'upi' ? 'border-red-500 bg-red-50 text-red-600' : 'border-slate-200 text-slate-600'"
+                  (click)="withdrawMethod = 'upi'">📱 UPI</button>
+                <button class="flex-1 py-2 rounded-lg border text-sm font-medium transition-all"
+                  [class]="withdrawMethod === 'bank' ? 'border-red-500 bg-red-50 text-red-600' : 'border-slate-200 text-slate-600'"
+                  (click)="withdrawMethod = 'bank'">🏦 Bank Transfer</button>
+              </div>
             </div>
 
-            <div class="p-3 rounded-lg bg-yellow-50 border border-yellow-200 mb-5">
-              <p class="text-yellow-700 text-xs">⚠️ Withdrawals are processed within 24-48 hours. Minimum withdrawal is ₹100.</p>
+            @if (withdrawMethod === 'upi') {
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-600 mb-2">UPI ID</label>
+                <input type="text" class="input-field" placeholder="yourname@upi" [(ngModel)]="withdrawUpi" />
+              </div>
+            } @else {
+              <div class="space-y-3 mb-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Account Holder Name</label>
+                  <input type="text" class="input-field" placeholder="As per bank records" [(ngModel)]="bankHolder" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Account Number</label>
+                  <input type="text" class="input-field" placeholder="Enter account number" [(ngModel)]="bankAccount" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">IFSC Code</label>
+                  <input type="text" class="input-field" placeholder="e.g. SBIN0001234" [(ngModel)]="bankIfsc" />
+                </div>
+              </div>
+            }
+
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-slate-600 mb-2">Amount (Min ₹100)</label>
+              <input type="number" class="input-field" placeholder="Enter amount" [(ngModel)]="withdrawAmt" [max]="withdrawable()" min="100" />
             </div>
+
+            <div class="p-3 rounded-lg bg-yellow-50 border border-yellow-200 mb-4">
+              <p class="text-yellow-700 text-xs">⚠️ Withdrawals processed in 24-48 hours. Min ₹100. TDS applicable on winnings above ₹10,000.</p>
+            </div>
+
+            @if (withdrawError()) {
+              <div class="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{{ withdrawError() }}</div>
+            }
 
             <div class="flex gap-3">
-              <button class="btn-secondary flex-1 justify-center" (click)="showWithdrawModal.set(false)">Cancel</button>
-              <button class="btn-primary flex-1 justify-center" (click)="processWithdraw()">
-                Withdraw ₹{{ withdrawAmount || 0 }}
+              <button class="btn-secondary flex-1 justify-center" (click)="showWithdraw.set(false)" [disabled]="processing()">Cancel</button>
+              <button class="btn-primary flex-1 justify-center" (click)="processWithdraw()" [disabled]="processing() || !withdrawAmt || withdrawAmt < 100">
+                @if (processing()) {
+                  <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                }
+                Withdraw ₹{{ (withdrawAmt || 0).toLocaleString('en-IN') }}
               </button>
             </div>
           </div>
+        </div>
+      }
+
+      <!-- ── SUCCESS TOAST ── -->
+      @if (successMsg()) {
+        <div class="fixed bottom-6 right-6 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 fade-in">
+          <span class="text-lg">✓</span>
+          <span class="font-medium text-sm">{{ successMsg() }}</span>
         </div>
       }
     </div>
   `
 })
 export class WalletComponent implements OnInit {
-  transactions: Transaction[] = [];
-  showDepositModal = signal(false);
-  showWithdrawModal = signal(false);
-  depositAmount: number | null = null;
-  withdrawAmount: number | null = null;
-  withdrawAccount = '';
-  selectedMethod = 'upi';
   Math = Math;
 
+  showDeposit = signal(false);
+  showWithdraw = signal(false);
+  processing = signal(false);
+  depositError = signal('');
+  withdrawError = signal('');
+  successMsg = signal('');
+
+  depositAmt: number | null = null;
+  depositMethod = 'upi';
+  upiId = '';
+
+  withdrawAmt: number | null = null;
+  withdrawMethod: 'upi' | 'bank' = 'upi';
+  withdrawUpi = '';
+  bankHolder = '';
+  bankAccount = '';
+  bankIfsc = '';
+
+  txFilter = '';
+
   user = this.auth.currentUser;
+
   quickAmounts = [100, 200, 500, 1000, 2000, 5000];
+
   paymentMethods = [
     { id: 'upi', name: 'UPI', icon: '📱', desc: 'Google Pay, PhonePe, Paytm' },
     { id: 'card', name: 'Debit / Credit Card', icon: '💳', desc: 'Visa, Mastercard, Rupay' },
-    { id: 'netbanking', name: 'Net Banking', icon: '🏦', desc: 'All major banks supported' }
+    { id: 'netbanking', name: 'Net Banking', icon: '🏦', desc: 'All major banks' },
   ];
 
-  constructor(private auth: AuthService, private data: DataService) {}
+  filteredTx = computed(() => {
+    const txs = this.state.transactions();
+    if (!this.txFilter) return txs;
+    return txs.filter(t => t.type === this.txFilter);
+  });
 
-  ngOnInit() { this.transactions = this.data.getTransactions(); }
+  totalDeposited = computed(() =>
+    this.state.transactions().filter(t => t.type === 'deposit' && t.status === 'success').reduce((s, t) => s + t.amount, 0)
+  );
+  totalWithdrawn = computed(() =>
+    Math.abs(this.state.transactions().filter(t => t.type === 'withdrawal' && t.status === 'success').reduce((s, t) => s + t.amount, 0))
+  );
+  totalPrize = computed(() =>
+    this.state.transactions().filter(t => t.type === 'prize').reduce((s, t) => s + t.amount, 0)
+  );
+  totalFees = computed(() =>
+    Math.abs(this.state.transactions().filter(t => t.type === 'entry_fee').reduce((s, t) => s + t.amount, 0))
+  );
+  withdrawable = computed(() => Math.max(0, this.user()?.walletBalance ?? 0));
 
-  processDeposit() {
-    if (!this.depositAmount || this.depositAmount < 10) return;
-    this.auth.updateWallet(this.depositAmount);
-    this.showDepositModal.set(false);
-    this.depositAmount = null;
+  constructor(private auth: AuthService, private state: StateService, private api: ApiService) {}
+
+  ngOnInit() {}
+
+  openDeposit() { this.depositError.set(''); this.showDeposit.set(true); }
+  openWithdraw() { this.withdrawError.set(''); this.showWithdraw.set(true); }
+
+  async processDeposit() {
+    if (!this.depositAmt || this.depositAmt < 10) { this.depositError.set('Minimum deposit is ₹10'); return; }
+    if (this.depositMethod === 'upi' && !this.upiId.includes('@')) { this.depositError.set('Enter a valid UPI ID'); return; }
+
+    this.processing.set(true);
+    this.depositError.set('');
+
+    const req: PaymentRequest = { amount: this.depositAmt, method: this.depositMethod as any, upiId: this.upiId };
+
+    try {
+      const res = await this.api.initiateDeposit(req);
+      this.auth.updateWallet(this.depositAmt);
+      this.state.addTransaction({
+        type: 'deposit',
+        amount: this.depositAmt,
+        description: `Wallet deposit via ${this.depositMethod.toUpperCase()}`,
+        status: 'success',
+        reference: res.transactionId,
+        paymentMethod: this.depositMethod
+      });
+      this.state.addNotification({ type: 'deposit', title: 'Money Added', message: `₹${this.depositAmt.toLocaleString('en-IN')} added to your wallet` });
+      this.showDeposit.set(false);
+      this.depositAmt = null;
+      this.upiId = '';
+      this.showSuccess(`₹${req.amount.toLocaleString('en-IN')} added successfully!`);
+    } catch (e: any) {
+      this.depositError.set(e?.message || 'Payment failed. Please try again.');
+    } finally {
+      this.processing.set(false);
+    }
   }
 
-  processWithdraw() {
-    if (!this.withdrawAmount || this.withdrawAmount < 100) return;
-    const balance = this.user()?.walletBalance || 0;
-    if (this.withdrawAmount > balance) return;
-    this.auth.updateWallet(-this.withdrawAmount);
-    this.showWithdrawModal.set(false);
-    this.withdrawAmount = null;
-    this.withdrawAccount = '';
-  }
+  async processWithdraw() {
+    const balance = this.withdrawable();
+    if (!this.withdrawAmt || this.withdrawAmt < 100) { this.withdrawError.set('Minimum withdrawal is ₹100'); return; }
+    if (this.withdrawAmt > balance) { this.withdrawError.set('Insufficient balance'); return; }
+    if (this.withdrawMethod === 'upi' && !this.withdrawUpi.includes('@')) { this.withdrawError.set('Enter a valid UPI ID'); return; }
+    if (this.withdrawMethod === 'bank' && (!this.bankAccount || !this.bankIfsc || !this.bankHolder)) {
+      this.withdrawError.set('Please fill all bank details'); return;
+    }
 
-  getTxIconClass(type: string): string {
-    const classes: Record<string, string> = {
-      deposit: 'bg-blue-50 text-blue-600',
-      withdrawal: 'bg-orange-50 text-orange-600',
-      prize: 'bg-green-50 text-green-600',
-      entry_fee: 'bg-red-50 text-red-500'
+    this.processing.set(true);
+    this.withdrawError.set('');
+
+    const req: WithdrawalRequest = {
+      amount: this.withdrawAmt,
+      method: this.withdrawMethod,
+      upiId: this.withdrawUpi,
+      accountNumber: this.bankAccount,
+      ifscCode: this.bankIfsc,
+      accountHolder: this.bankHolder
     };
-    return classes[type] || 'bg-slate-100';
+
+    try {
+      const res = await this.api.initiateWithdrawal(req);
+      this.auth.updateWallet(-this.withdrawAmt);
+      this.state.addTransaction({
+        type: 'withdrawal',
+        amount: -this.withdrawAmt,
+        description: `Withdrawal via ${this.withdrawMethod === 'upi' ? 'UPI' : 'Bank Transfer'}`,
+        status: 'pending',
+        reference: res.referenceId
+      });
+      this.state.addNotification({ type: 'withdrawal', title: 'Withdrawal Requested', message: `₹${this.withdrawAmt.toLocaleString('en-IN')} withdrawal initiated. ${res.estimatedTime}` });
+      this.showWithdraw.set(false);
+      this.withdrawAmt = null;
+      this.withdrawUpi = '';
+      this.bankAccount = '';
+      this.bankIfsc = '';
+      this.bankHolder = '';
+      this.showSuccess(`Withdrawal of ₹${req.amount.toLocaleString('en-IN')} submitted!`);
+    } catch (e: any) {
+      this.withdrawError.set(e?.message || 'Withdrawal failed. Please try again.');
+    } finally {
+      this.processing.set(false);
+    }
+  }
+
+  private showSuccess(msg: string) {
+    this.successMsg.set(msg);
+    setTimeout(() => this.successMsg.set(''), 3500);
+  }
+
+  getTxBg(type: string): string {
+    const m: Record<string, string> = { deposit: 'bg-blue-50', withdrawal: 'bg-orange-50', prize: 'bg-green-50', entry_fee: 'bg-red-50', refund: 'bg-purple-50', bonus: 'bg-yellow-50' };
+    return m[type] || 'bg-slate-100';
   }
 
   getTxIcon(type: string): string {
-    const icons: Record<string, string> = { deposit: '↓', withdrawal: '↑', prize: '🏆', entry_fee: '🎯' };
-    return icons[type] || '💰';
+    const m: Record<string, string> = { deposit: '↓', withdrawal: '↑', prize: '🏆', entry_fee: '🎯', refund: '↩', bonus: '🎁' };
+    return m[type] || '💰';
   }
 
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  formatDate(d: string): string {
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 }
