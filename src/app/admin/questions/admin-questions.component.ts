@@ -41,19 +41,19 @@ import { Question } from '../../shared/models/models';
         @for (question of filteredQuestions; track question.id) {
           <div class="glass-card p-5">
             <div class="flex items-start gap-4">
-              <div class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center text-blue-400 font-bold text-sm flex-shrink-0 mt-0.5">
+              <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 font-bold text-sm flex-shrink-0 mt-0.5">
                 Q
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-white font-medium text-sm mb-3">{{ question.text }}</p>
+                <p class="text-slate-800 font-medium text-sm mb-3">{{ question.text }}</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   @for (option of question.options; track $index) {
                     <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
                       [class]="$index === question.correctAnswer
-                        ? 'bg-green-500/15 border border-green-500/30 text-green-400'
-                        : 'bg-dark-600/40 border border-blue-900/15 text-slate-400'">
+                        ? 'bg-green-50 border border-green-200 text-green-700'
+                        : 'bg-slate-50 border border-slate-200 text-slate-600'">
                       <span class="w-5 h-5 rounded flex items-center justify-center font-bold flex-shrink-0"
-                        [class]="$index === question.correctAnswer ? 'bg-green-500/30 text-green-300' : 'bg-blue-500/15 text-blue-400'">
+                        [class]="$index === question.correctAnswer ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'">
                         {{ optionLabels[$index] }}
                       </span>
                       {{ option }}
@@ -88,13 +88,13 @@ import { Question } from '../../shared/models/models';
       @if (showModal()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
           <div class="glass-card p-6 w-full max-w-2xl my-4">
-            <h3 class="text-white font-bold text-lg mb-5">
+            <h3 class="text-slate-800 font-bold text-lg mb-5">
               {{ editingId ? 'Edit Question' : 'Add New Question' }}
             </h3>
 
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Quiz</label>
+                <label class="block text-sm font-medium text-slate-600 mb-2">Quiz</label>
                 <select class="input-field" [(ngModel)]="form.quizId">
                   <option value="q3">Sports Mania Challenge</option>
                   <option value="q1">General Knowledge Blitz</option>
@@ -103,7 +103,7 @@ import { Question } from '../../shared/models/models';
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Question Text</label>
+                <label class="block text-sm font-medium text-slate-600 mb-2">Question Text</label>
                 <textarea
                   class="input-field h-24 resize-none"
                   placeholder="Enter the question..."
@@ -112,7 +112,7 @@ import { Question } from '../../shared/models/models';
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-300 mb-3">Answer Options</label>
+                <label class="block text-sm font-medium text-slate-600 mb-3">Answer Options</label>
                 <div class="space-y-2">
                   @for (label of optionLabels; track label; let i = $index) {
                     <div class="flex items-center gap-3">
@@ -125,7 +125,7 @@ import { Question } from '../../shared/models/models';
                           class="accent-green-500"
                         />
                         <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
-                          [class]="form.correctAnswer === i ? 'bg-green-500/25 text-green-400 border border-green-500/40' : 'bg-blue-500/15 text-blue-400 border border-blue-500/20'">
+                          [class]="form.correctAnswer === i ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-500 border border-red-100'">
                           {{ label }}
                         </span>
                       </label>
@@ -143,7 +143,7 @@ import { Question } from '../../shared/models/models';
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Time Limit (seconds)</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Time Limit (seconds)</label>
                   <select class="input-field" [(ngModel)]="form.timeLimit">
                     <option value="10">10 seconds</option>
                     <option value="15">15 seconds</option>
@@ -152,7 +152,7 @@ import { Question } from '../../shared/models/models';
                   </select>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Points</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Points</label>
                   <select class="input-field" [(ngModel)]="form.points">
                     <option value="50">50 points</option>
                     <option value="100">100 points</option>

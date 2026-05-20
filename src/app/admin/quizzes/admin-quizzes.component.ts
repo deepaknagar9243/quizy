@@ -35,11 +35,11 @@ import { Quiz } from '../../shared/models/models';
                   } @else if (quiz.status === 'upcoming') {
                     <span class="badge-upcoming">UPCOMING</span>
                   } @else {
-                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-400 border border-slate-500/30">COMPLETED</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">COMPLETED</span>
                   }
                   <span class="text-xs text-muted">{{ quiz.category }}</span>
                 </div>
-                <h3 class="text-white font-semibold text-sm truncate">{{ quiz.title }}</h3>
+                <h3 class="text-slate-800 font-semibold text-sm truncate">{{ quiz.title }}</h3>
               </div>
               <div class="flex gap-2 flex-shrink-0">
                 <button class="btn-secondary text-xs px-3 py-1.5" (click)="editQuiz(quiz)">Edit</button>
@@ -50,23 +50,23 @@ import { Quiz } from '../../shared/models/models';
             <div class="grid grid-cols-2 gap-3 mt-3">
               <div class="glass-card-light p-3 rounded-xl">
                 <div class="text-muted text-xs mb-1">Entry Fee</div>
-                <div class="text-white font-bold">₹{{ quiz.entryFee }}</div>
+                <div class="text-slate-800 font-bold">₹{{ quiz.entryFee }}</div>
               </div>
               <div class="glass-card-light p-3 rounded-xl">
                 <div class="text-muted text-xs mb-1">Prize Pool</div>
-                <div class="text-green-400 font-bold">₹{{ quiz.prizePool.toLocaleString('en-IN') }}</div>
+                <div class="text-green-600 font-bold">₹{{ quiz.prizePool.toLocaleString('en-IN') }}</div>
               </div>
               <div class="glass-card-light p-3 rounded-xl">
                 <div class="text-muted text-xs mb-1">Participants</div>
-                <div class="text-white font-bold">{{ quiz.totalParticipants }}/{{ quiz.maxParticipants }}</div>
+                <div class="text-slate-800 font-bold">{{ quiz.totalParticipants }}/{{ quiz.maxParticipants }}</div>
               </div>
               <div class="glass-card-light p-3 rounded-xl">
                 <div class="text-muted text-xs mb-1">Questions</div>
-                <div class="text-white font-bold">{{ quiz.totalQuestions }}</div>
+                <div class="text-slate-800 font-bold">{{ quiz.totalQuestions }}</div>
               </div>
             </div>
 
-            <div class="mt-3 pt-3 border-t border-blue-900/15 flex items-center justify-between text-xs text-muted">
+            <div class="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-muted">
               <span>🕐 {{ formatTime(quiz.startTime) }}</span>
               <span>{{ quiz.duration }} min duration</span>
             </div>
@@ -78,19 +78,19 @@ import { Quiz } from '../../shared/models/models';
       @if (showAddModal() || showEditModal()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
           <div class="glass-card p-6 w-full max-w-lg my-4">
-            <h3 class="text-white font-bold text-lg mb-5">
+            <h3 class="text-slate-800 font-bold text-lg mb-5">
               {{ showEditModal() ? 'Edit Quiz' : 'Add New Quiz' }}
             </h3>
 
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Quiz Title</label>
+                <label class="block text-sm font-medium text-slate-600 mb-2">Quiz Title</label>
                 <input type="text" class="input-field" placeholder="Enter quiz title" [(ngModel)]="form.title" />
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Category</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Category</label>
                   <select class="input-field" [(ngModel)]="form.category">
                     <option value="General">General Knowledge</option>
                     <option value="Science">Science</option>
@@ -101,7 +101,7 @@ import { Quiz } from '../../shared/models/models';
                   </select>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Status</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Status</label>
                   <select class="input-field" [(ngModel)]="form.status">
                     <option value="upcoming">Upcoming</option>
                     <option value="live">Live</option>
@@ -112,28 +112,28 @@ import { Quiz } from '../../shared/models/models';
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Entry Fee (₹)</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Entry Fee (₹)</label>
                   <input type="number" class="input-field" placeholder="e.g. 50" [(ngModel)]="form.entryFee" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Prize Pool (₹)</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Prize Pool (₹)</label>
                   <input type="number" class="input-field" placeholder="e.g. 5000" [(ngModel)]="form.prizePool" />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Max Participants</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Max Participants</label>
                   <input type="number" class="input-field" placeholder="e.g. 200" [(ngModel)]="form.maxParticipants" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Total Questions</label>
+                  <label class="block text-sm font-medium text-slate-600 mb-2">Total Questions</label>
                   <input type="number" class="input-field" placeholder="e.g. 21" [(ngModel)]="form.totalQuestions" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Start Date & Time</label>
+                <label class="block text-sm font-medium text-slate-600 mb-2">Start Date & Time</label>
                 <input type="datetime-local" class="input-field" [(ngModel)]="form.startTime" />
               </div>
             </div>
@@ -153,7 +153,7 @@ import { Quiz } from '../../shared/models/models';
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div class="glass-card p-6 w-full max-w-sm text-center">
             <div class="text-4xl mb-4">⚠️</div>
-            <h3 class="text-white font-bold text-lg mb-2">Delete Quiz?</h3>
+            <h3 class="text-slate-800 font-bold text-lg mb-2">Delete Quiz?</h3>
             <p class="text-muted text-sm mb-6">This action cannot be undone. All associated questions and participant data will be lost.</p>
             <div class="flex gap-3">
               <button class="btn-secondary flex-1 justify-center" (click)="showDeleteConfirm.set(false)">Cancel</button>

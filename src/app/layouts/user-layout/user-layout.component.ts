@@ -9,9 +9,9 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
   standalone: true,
   imports: [CommonModule, RouterOutlet, SidebarComponent, NavbarComponent],
   template: `
-    <div class="flex h-screen overflow-hidden bg-dark-900">
+    <div class="flex h-screen overflow-hidden bg-slate-100">
       <!-- Desktop Sidebar -->
-      <aside class="hidden lg:flex w-64 flex-col flex-shrink-0 border-r border-blue-900/20 bg-dark-800">
+      <aside class="hidden lg:flex w-64 flex-col flex-shrink-0 border-r border-slate-200 bg-white">
         <app-sidebar></app-sidebar>
       </aside>
 
@@ -19,7 +19,7 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
       @if (sidebarOpen()) {
         <div class="fixed inset-0 z-40 lg:hidden">
           <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="sidebarOpen.set(false)"></div>
-          <aside class="absolute left-0 top-0 h-full w-64 bg-dark-800 border-r border-blue-900/20 z-50">
+          <aside class="absolute left-0 top-0 h-full w-64 bg-white border-r border-slate-200 z-50">
             <app-sidebar (navClick)="sidebarOpen.set(false)"></app-sidebar>
           </aside>
         </div>

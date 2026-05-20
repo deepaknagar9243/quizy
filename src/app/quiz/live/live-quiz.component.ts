@@ -21,20 +21,20 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
               </svg>
             </div>
             <span class="badge-live text-sm mb-4 inline-flex">LIVE NOW</span>
-            <h2 class="text-2xl font-bold text-white mt-3 mb-2">Sports Mania Challenge</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mt-3 mb-2">Sports Mania Challenge</h2>
             <p class="text-muted mb-2">200 players competing • Prize Pool ₹7,500</p>
             <p class="text-muted text-sm mb-8">Entry fee: ₹75 has been deducted from your wallet</p>
             <div class="grid grid-cols-3 gap-4 mb-8">
               <div class="stat-card text-center">
-                <div class="text-xl font-bold text-white">21</div>
+                <div class="text-xl font-bold text-slate-800">21</div>
                 <div class="text-muted text-xs mt-1">Questions</div>
               </div>
               <div class="stat-card text-center">
-                <div class="text-xl font-bold text-white">15s</div>
+                <div class="text-xl font-bold text-slate-800">15s</div>
                 <div class="text-muted text-xs mt-1">Per Question</div>
               </div>
               <div class="stat-card text-center">
-                <div class="text-xl font-bold text-white">100</div>
+                <div class="text-xl font-bold text-slate-800">100</div>
                 <div class="text-muted text-xs mt-1">Points Each</div>
               </div>
             </div>
@@ -54,15 +54,15 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
             <div class="glass-card p-4 flex items-center justify-between gap-4">
               <div class="flex items-center gap-3">
                 <span class="badge-live">LIVE</span>
-                <span class="text-white font-semibold text-sm">Sports Mania Challenge</span>
+                <span class="text-slate-800 font-semibold text-sm">Sports Mania Challenge</span>
               </div>
               <div class="flex items-center gap-4">
                 <div class="text-center">
-                  <div class="text-blue-400 font-bold text-lg leading-none">{{ currentScore() }}</div>
+                  <div class="text-red-600 font-bold text-lg leading-none">{{ currentScore() }}</div>
                   <div class="text-muted text-xs">Score</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-white font-bold text-lg leading-none">{{ currentQuestionIndex() + 1 }}/{{ questions.length }}</div>
+                  <div class="text-slate-800 font-bold text-lg leading-none">{{ currentQuestionIndex() + 1 }}/{{ questions.length }}</div>
                   <div class="text-muted text-xs">Question</div>
                 </div>
               </div>
@@ -76,7 +76,7 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
                   {{ timeLeft() }}s
                 </span>
               </div>
-              <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
+              <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full transition-all duration-1000"
                   [class]="timeLeft() <= 5 ? 'timer-danger' : 'timer-bar'"
@@ -88,13 +88,13 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
             <!-- Question Card -->
             <div class="glass-card p-6">
               <div class="flex items-center gap-2 mb-4">
-                <span class="text-xs text-blue-400 font-semibold bg-blue-500/10 px-3 py-1 rounded-full">
+                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">
                   Question {{ currentQuestionIndex() + 1 }} of {{ questions.length }}
                 </span>
                 <span class="text-xs text-muted">{{ currentQuestion()?.points }} points</span>
               </div>
 
-              <h3 class="text-white text-lg font-semibold mb-6 leading-relaxed">
+              <h3 class="text-slate-800 text-lg font-semibold mb-6 leading-relaxed">
                 {{ currentQuestion()?.text }}
               </h3>
 
@@ -109,10 +109,10 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
                     [disabled]="selectedAnswer() !== null || timeLeft() === 0"
                     (click)="selectAnswer($index)"
                   >
-                    <span class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center text-blue-400 font-bold text-sm flex-shrink-0">
+                    <span class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 font-bold text-sm flex-shrink-0">
                       {{ optionLabels[$index] }}
                     </span>
-                    <span class="flex-1">{{ option }}</span>
+                    <span class="flex-1 text-slate-700">{{ option }}</span>
                     @if (showResult() && $index === currentQuestion()?.correctAnswer) {
                       <span class="text-green-400 text-lg">✓</span>
                     }
@@ -146,7 +146,7 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
                 <span class="text-muted text-xs">Quiz Progress</span>
                 <span class="text-muted text-xs">{{ currentQuestionIndex() + 1 }}/{{ questions.length }}</span>
               </div>
-              <div class="h-1.5 bg-dark-600 rounded-full overflow-hidden">
+              <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                 <div
                   class="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-500"
                   [style.width.%]="((currentQuestionIndex() + 1) / questions.length) * 100"
@@ -157,7 +157,7 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
 
           <!-- Live Leaderboard Sidebar -->
           <div class="glass-card p-5 h-fit">
-            <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+            <h3 class="text-slate-800 font-bold mb-4 flex items-center gap-2">
               <span>🏆</span> Live Rankings
             </h3>
             <div class="space-y-2">
@@ -165,20 +165,20 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
                 <div class="flex items-center gap-2 p-2 rounded-lg"
                   [class]="entry.name === 'You' ? 'bg-blue-500/15 border border-blue-500/25' : ''">
                   <div [class]="getRankClass(entry.rank)" class="text-xs">{{ entry.rank }}</div>
-                  <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  <div class="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                     {{ entry.avatar }}
                   </div>
                   <div class="flex-1 min-w-0">
-                    <div class="text-white text-xs font-medium truncate">{{ entry.name }}</div>
+                    <div class="text-slate-800 text-xs font-medium truncate">{{ entry.name }}</div>
                   </div>
-                  <div class="text-blue-400 text-xs font-bold">{{ entry.score }}</div>
+                  <div class="text-red-600 text-xs font-bold">{{ entry.score }}</div>
                 </div>
               }
             </div>
             <div class="mt-4 pt-4 border-t border-blue-900/30">
               <div class="text-center">
                 <div class="text-muted text-xs">Players Remaining</div>
-                <div class="text-white font-bold text-xl">{{ 200 - currentQuestionIndex() * 8 }}</div>
+                <div class="text-slate-800 font-bold text-xl">{{ 200 - currentQuestionIndex() * 8 }}</div>
               </div>
             </div>
           </div>
@@ -190,20 +190,20 @@ import { Question, LeaderboardEntry } from '../../shared/models/models';
         <div class="max-w-xl mx-auto text-center py-8">
           <div class="glass-card p-10">
             <div class="text-6xl mb-4">🏆</div>
-            <h2 class="text-2xl font-bold text-white mb-2">Quiz Completed!</h2>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">Quiz Completed!</h2>
             <p class="text-muted mb-6">Great effort! Here's your result</p>
 
             <div class="grid grid-cols-3 gap-4 mb-6">
               <div class="stat-card text-center">
-                <div class="text-2xl font-bold text-blue-400">{{ currentScore() }}</div>
+                <div class="text-2xl font-bold text-red-600">{{ currentScore() }}</div>
                 <div class="text-muted text-xs mt-1">Final Score</div>
               </div>
               <div class="stat-card text-center">
-                <div class="text-2xl font-bold text-green-400">{{ correctAnswers() }}</div>
+                <div class="text-2xl font-bold text-green-600">{{ correctAnswers() }}</div>
                 <div class="text-muted text-xs mt-1">Correct</div>
               </div>
               <div class="stat-card text-center">
-                <div class="text-2xl font-bold text-purple-400">#{{ finalRank() }}</div>
+                <div class="text-2xl font-bold text-purple-600">#{{ finalRank() }}</div>
                 <div class="text-muted text-xs mt-1">Your Rank</div>
               </div>
             </div>

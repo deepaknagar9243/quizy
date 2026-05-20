@@ -16,49 +16,45 @@ import { LeaderboardEntry } from '../shared/models/models';
 
       <!-- Top 3 Podium -->
       <div class="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-        <!-- 2nd place -->
         <div class="glass-card p-5 text-center order-1 mt-6">
           <div class="w-14 h-14 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center text-white font-bold text-lg mx-auto mb-3">
             {{ topThree[1]?.avatar }}
           </div>
           <div class="rank-badge-2 mx-auto mb-2 w-8 h-8 text-sm">2</div>
-          <div class="text-white font-semibold text-sm">{{ topThree[1]?.name }}</div>
+          <div class="text-slate-800 font-semibold text-sm">{{ topThree[1]?.name }}</div>
           <div class="text-muted text-xs mt-1">{{ topThree[1]?.score?.toLocaleString('en-IN') }} pts</div>
-          <div class="text-green-400 text-xs font-semibold mt-1">₹{{ topThree[1]?.totalEarnings?.toLocaleString('en-IN') }}</div>
+          <div class="text-green-600 text-xs font-semibold mt-1">₹{{ topThree[1]?.totalEarnings?.toLocaleString('en-IN') }}</div>
         </div>
 
-        <!-- 1st place -->
-        <div class="glass-card p-5 text-center order-2 border-yellow-500/30 relative">
+        <div class="glass-card p-5 text-center order-2 border-yellow-400/40 relative">
           <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl">👑</div>
           <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-bold text-xl mx-auto mb-3 mt-2">
             {{ topThree[0]?.avatar }}
           </div>
           <div class="rank-badge-1 mx-auto mb-2 w-8 h-8 text-sm">1</div>
-          <div class="text-white font-bold text-sm">{{ topThree[0]?.name }}</div>
+          <div class="text-slate-800 font-bold text-sm">{{ topThree[0]?.name }}</div>
           <div class="text-muted text-xs mt-1">{{ topThree[0]?.score?.toLocaleString('en-IN') }} pts</div>
-          <div class="text-green-400 text-sm font-bold mt-1">₹{{ topThree[0]?.totalEarnings?.toLocaleString('en-IN') }}</div>
+          <div class="text-green-600 text-sm font-bold mt-1">₹{{ topThree[0]?.totalEarnings?.toLocaleString('en-IN') }}</div>
         </div>
 
-        <!-- 3rd place -->
         <div class="glass-card p-5 text-center order-3 mt-6">
           <div class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center text-white font-bold text-lg mx-auto mb-3">
             {{ topThree[2]?.avatar }}
           </div>
           <div class="rank-badge-3 mx-auto mb-2 w-8 h-8 text-sm">3</div>
-          <div class="text-white font-semibold text-sm">{{ topThree[2]?.name }}</div>
+          <div class="text-slate-800 font-semibold text-sm">{{ topThree[2]?.name }}</div>
           <div class="text-muted text-xs mt-1">{{ topThree[2]?.score?.toLocaleString('en-IN') }} pts</div>
-          <div class="text-green-400 text-xs font-semibold mt-1">₹{{ topThree[2]?.totalEarnings?.toLocaleString('en-IN') }}</div>
+          <div class="text-green-600 text-xs font-semibold mt-1">₹{{ topThree[2]?.totalEarnings?.toLocaleString('en-IN') }}</div>
         </div>
       </div>
 
       <!-- Full Leaderboard Table -->
       <div class="glass-card overflow-hidden">
-        <div class="p-5 border-b border-blue-900/20">
-          <h3 class="text-white font-bold">Full Rankings</h3>
+        <div class="p-5 border-b border-slate-200">
+          <h3 class="text-slate-800 font-bold">Full Rankings</h3>
         </div>
 
-        <!-- Header -->
-        <div class="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-semibold text-muted uppercase tracking-wider border-b border-blue-900/10">
+        <div class="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-semibold text-muted uppercase tracking-wider border-b border-slate-100">
           <div class="col-span-1">Rank</div>
           <div class="col-span-4 sm:col-span-5">Player</div>
           <div class="col-span-3 text-right">Score</div>
@@ -72,23 +68,23 @@ import { LeaderboardEntry } from '../shared/models/models';
               <div [class]="getRankClass(entry.rank)">{{ entry.rank }}</div>
             </div>
             <div class="col-span-4 sm:col-span-5 flex items-center gap-3 min-w-0">
-              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                 {{ entry.avatar }}
               </div>
               <div class="min-w-0">
-                <div class="text-white font-medium text-sm truncate">{{ entry.name }}</div>
+                <div class="text-slate-800 font-medium text-sm truncate">{{ entry.name }}</div>
                 <div class="text-muted text-xs">{{ entry.quizWins }} quiz wins</div>
               </div>
             </div>
             <div class="col-span-3 text-right">
-              <span class="text-blue-400 font-bold text-sm">{{ entry.score.toLocaleString('en-IN') }}</span>
+              <span class="text-red-600 font-bold text-sm">{{ entry.score.toLocaleString('en-IN') }}</span>
               <div class="text-muted text-xs">points</div>
             </div>
             <div class="hidden sm:block col-span-2 text-right">
-              <span class="text-white font-semibold">{{ entry.quizWins }}</span>
+              <span class="text-slate-700 font-semibold">{{ entry.quizWins }}</span>
             </div>
             <div class="col-span-4 sm:col-span-2 text-right">
-              <span class="text-green-400 font-semibold text-sm">₹{{ entry.totalEarnings.toLocaleString('en-IN') }}</span>
+              <span class="text-green-600 font-semibold text-sm">₹{{ entry.totalEarnings.toLocaleString('en-IN') }}</span>
             </div>
           </div>
         }

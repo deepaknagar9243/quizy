@@ -10,14 +10,14 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="flex flex-col h-full">
       <!-- Logo -->
-      <div class="p-5 border-b border-blue-900/30">
+      <div class="p-5 border-b border-slate-200">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center flex-shrink-0">
             <span class="text-white font-bold text-base">Q</span>
           </div>
           <div>
-            <div class="text-white font-bold text-base leading-tight">QuizArena</div>
-            <div class="text-blue-400 text-xs">Compete & Win</div>
+            <div class="text-slate-800 font-bold text-base leading-tight">QuizArena</div>
+            <div class="text-red-600 text-xs">Compete & Win</div>
           </div>
         </div>
       </div>
@@ -76,13 +76,13 @@ import { AuthService } from '../../services/auth.service';
       </nav>
 
       <!-- User info + logout -->
-      <div class="p-4 border-t border-blue-900/30">
+      <div class="p-4 border-t border-slate-200">
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {{ user()?.avatar }}
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-white text-sm font-semibold truncate">{{ user()?.name }}</div>
+            <div class="text-slate-800 text-sm font-semibold truncate">{{ user()?.name }}</div>
             <div class="text-green-400 text-xs">₹{{ user()?.walletBalance?.toLocaleString('en-IN') }}</div>
           </div>
         </div>

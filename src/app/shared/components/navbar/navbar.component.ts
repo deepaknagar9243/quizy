@@ -7,10 +7,10 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <header class="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-blue-900/20 bg-dark-800/80 backdrop-blur-sm">
+    <header class="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-slate-200 bg-white">
       <!-- Mobile menu button -->
       <button
-        class="lg:hidden text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5"
+        class="lg:hidden text-slate-500 hover:text-slate-800 p-2 rounded-lg hover:bg-slate-100"
         (click)="menuToggle.emit()"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,7 +19,7 @@ import { AuthService } from '../../services/auth.service';
       </button>
 
       <div class="hidden lg:block">
-        <h1 class="text-white font-semibold text-base">{{ title }}</h1>
+        <h1 class="text-slate-800 font-semibold text-base">{{ title }}</h1>
       </div>
 
       <div class="flex items-center gap-3 ml-auto">
@@ -32,15 +32,15 @@ import { AuthService } from '../../services/auth.service';
         </div>
 
         <!-- Notification -->
-        <button class="relative p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5">
+        <button class="relative p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
           </svg>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full"></span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
         <!-- Avatar -->
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-xs cursor-pointer">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-bold text-xs cursor-pointer">
           {{ user()?.avatar }}
         </div>
       </div>
