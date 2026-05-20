@@ -11,208 +11,180 @@ import { Quiz, LeaderboardEntry, Winner } from '../shared/models/models';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="space-y-6 fade-in">
-      <!-- Welcome Section -->
-      <div class="glass-card p-6 relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-red-600/5 to-transparent pointer-events-none"></div>
-        <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="space-y-4 fade-in">
+
+      <!-- Hero / Welcome -->
+      <div class="glass-card p-5 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -translate-y-8 translate-x-8 pointer-events-none"></div>
+        <div class="relative flex items-center justify-between gap-4">
           <div>
-            <p class="text-red-500 text-sm font-medium mb-1">Welcome back 👋</p>
-            <h2 class="text-2xl font-bold text-slate-800">{{ user()?.name }}</h2>
-            <p class="text-muted text-sm mt-1">Ready to compete today?</p>
+            <p class="text-red-600 text-sm font-semibold">👋 Welcome back</p>
+            <h2 class="text-xl font-bold text-slate-800 mt-0.5">{{ (user()?.name || '').split(' ')[0] }}</h2>
+            <p class="text-muted text-xs mt-1">Ready to win today?</p>
           </div>
-          <div class="flex gap-4">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-green-400">₹{{ user()?.walletBalance?.toLocaleString('en-IN') }}</div>
-              <div class="text-muted text-xs mt-1">Wallet Balance</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-slate-800">{{ user()?.totalWins }}</div>
-              <div class="text-muted text-xs mt-1">Total Wins</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-purple-600">#{{ user()?.rank }}</div>
-              <div class="text-muted text-xs mt-1">Your Rank</div>
-            </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-2xl font-bold text-green-600">₹{{ user()?.walletBalance?.toLocaleString('en-IN') }}</div>
+            <div class="text-xs text-muted mt-0.5">Wallet Balance</div>
+            <a routerLink="/wallet" class="text-xs text-red-500 font-medium mt-1 inline-block">Add Money →</a>
           </div>
         </div>
       </div>
 
       <!-- Quick Stats -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="stat-card">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
-              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-              </svg>
-            </div>
-            <span class="text-muted text-xs">Quizzes Played</span>
-          </div>
-          <div class="text-2xl font-bold text-slate-800">{{ user()?.totalQuizzes }}</div>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="stat-card text-center p-3">
+          <div class="text-xl font-bold text-slate-800">{{ user()?.totalQuizzes }}</div>
+          <div class="text-muted text-xs mt-0.5">Played</div>
         </div>
-
-        <div class="stat-card">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-9 h-9 rounded-lg bg-green-500/15 flex items-center justify-center">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <span class="text-muted text-xs">Wins</span>
-          </div>
-          <div class="text-2xl font-bold text-slate-800">{{ user()?.totalWins }}</div>
+        <div class="stat-card text-center p-3">
+          <div class="text-xl font-bold text-green-600">{{ user()?.totalWins }}</div>
+          <div class="text-muted text-xs mt-0.5">Wins</div>
         </div>
-
-        <div class="stat-card">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-9 h-9 rounded-lg bg-yellow-500/15 flex items-center justify-center">
-              <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1"/>
-              </svg>
-            </div>
-            <span class="text-muted text-xs">Total Earned</span>
-          </div>
-          <div class="text-2xl font-bold text-slate-800">₹8.5K</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-9 h-9 rounded-lg bg-purple-500/15 flex items-center justify-center">
-              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-              </svg>
-            </div>
-            <span class="text-muted text-xs">Win Rate</span>
-          </div>
-          <div class="text-2xl font-bold text-slate-800">33%</div>
+        <div class="stat-card text-center p-3">
+          <div class="text-xl font-bold text-purple-600">#{{ user()?.rank }}</div>
+          <div class="text-muted text-xs mt-0.5">Rank</div>
         </div>
       </div>
 
       <!-- Live Quiz Banner -->
       @if (liveQuiz) {
-        <div class="glass-card p-5 border border-red-500/20 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-r from-red-600/5 to-transparent pointer-events-none"></div>
-          <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-red-500/15 flex items-center justify-center flex-shrink-0">
-                <svg class="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10"/>
-                </svg>
-              </div>
-              <div>
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="badge-live">LIVE NOW</span>
-                </div>
-                <h3 class="text-slate-800 font-bold">{{ liveQuiz.title }}</h3>
-                <p class="text-muted text-sm">{{ liveQuiz.totalParticipants }} players active • Prize Pool ₹{{ liveQuiz.prizePool.toLocaleString('en-IN') }}</p>
-              </div>
+        <a routerLink="/quiz/live" class="block glass-card p-4 border-2 border-red-200 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-r from-red-50 to-transparent pointer-events-none"></div>
+          <div class="relative flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+              <div class="w-5 h-5 bg-red-500 rounded-full animate-pulse"></div>
             </div>
-            <a routerLink="/quiz/live" class="btn-primary flex-shrink-0">
-              Join Live Quiz →
-            </a>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="badge-live">LIVE NOW</span>
+              </div>
+              <h3 class="text-slate-800 font-bold text-sm truncate">{{ liveQuiz.title }}</h3>
+              <p class="text-muted text-xs">{{ liveQuiz.totalParticipants }} playing · Prize ₹{{ liveQuiz.prizePool.toLocaleString('en-IN') }}</p>
+            </div>
+            <div class="flex-shrink-0">
+              <div class="btn-primary text-sm px-4 py-2.5">Join →</div>
+            </div>
           </div>
-        </div>
+        </a>
       }
 
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <!-- Upcoming Quizzes -->
-        <div class="xl:col-span-2 space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-slate-800 font-bold text-lg">Upcoming Quizzes</h3>
-            <span class="text-muted text-sm">{{ upcomingQuizzes.length }} available</span>
-          </div>
+      <!-- Upcoming Quizzes -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-slate-800 font-bold">Upcoming Quizzes</h3>
+          <span class="text-xs text-muted">{{ upcomingQuizzes.length }} available</span>
+        </div>
 
-          <div class="space-y-3">
-            @for (quiz of upcomingQuizzes; track quiz.id) {
-              <div class="glass-card-light p-4 hover:border-red-300 transition-all">
-                <div class="flex items-center justify-between gap-4">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                      <span class="badge-upcoming">{{ quiz.category }}</span>
-                    </div>
-                    <h4 class="text-slate-800 font-semibold text-sm truncate">{{ quiz.title }}</h4>
-                    <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted">
-                      <span>🕐 {{ formatTime(quiz.startTime) }}</span>
-                      <span>👥 {{ quiz.totalParticipants }}/{{ quiz.maxParticipants }}</span>
-                      <span>❓ {{ quiz.totalQuestions }} Qs</span>
-                    </div>
+        <div class="space-y-3">
+          @for (quiz of upcomingQuizzes; track quiz.id) {
+            <div class="glass-card p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1.5">
+                    <span class="badge-upcoming">{{ quiz.category }}</span>
                   </div>
-                  <div class="text-right flex-shrink-0">
-                    <div class="text-green-400 font-bold text-sm">₹{{ quiz.prizePool.toLocaleString('en-IN') }}</div>
-                    <div class="text-muted text-xs mb-2">Prize Pool</div>
-                    <button class="btn-primary text-xs px-3 py-1.5">
-                      Join ₹{{ quiz.entryFee }}
-                    </button>
+                  <h4 class="text-slate-800 font-semibold text-sm">{{ quiz.title }}</h4>
+                  <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted">
+                    <span>🕐 {{ formatTime(quiz.startTime) }}</span>
+                    <span>👥 {{ quiz.totalParticipants }}/{{ quiz.maxParticipants }}</span>
+                    <span>❓ {{ quiz.totalQuestions }}Q</span>
                   </div>
                 </div>
+                <div class="text-right flex-shrink-0">
+                  <div class="text-green-600 font-bold text-sm">₹{{ quiz.prizePool.toLocaleString('en-IN') }}</div>
+                  <div class="text-muted text-xs mb-2">Prize Pool</div>
+                  <button class="btn-primary text-xs px-3 py-2">
+                    ₹{{ quiz.entryFee }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Participants bar -->
+              <div class="mt-3">
+                <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full"
+                    [style.width.%]="(quiz.totalParticipants / quiz.maxParticipants) * 100"></div>
+                </div>
+                <div class="flex justify-between text-xs text-muted mt-1">
+                  <span>{{ quiz.totalParticipants }} joined</span>
+                  <span>{{ quiz.maxParticipants - quiz.totalParticipants }} spots left</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Two column: Leaderboard + Winners -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <!-- Top Players -->
+        <div class="glass-card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-slate-800 font-bold text-sm">🏆 Top Players</h3>
+            <a routerLink="/leaderboard" class="text-xs text-red-500 font-medium">See all →</a>
+          </div>
+          <div class="space-y-3">
+            @for (entry of topPlayers; track entry.rank) {
+              <div class="flex items-center gap-3">
+                <div [class]="getRankClass(entry.rank)">{{ entry.rank }}</div>
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  {{ entry.avatar }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-slate-800 text-xs font-semibold truncate">{{ entry.name }}</div>
+                  <div class="text-muted text-xs">{{ entry.score.toLocaleString('en-IN') }} pts</div>
+                </div>
+                <div class="text-green-600 text-xs font-bold flex-shrink-0">₹{{ (entry.totalEarnings/1000).toFixed(0) }}K</div>
               </div>
             }
           </div>
         </div>
 
-        <!-- Right Column -->
-        <div class="space-y-5">
-          <!-- Leaderboard Preview -->
-          <div class="glass-card p-5">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-slate-800 font-bold">Top Players</h3>
-              <a routerLink="/leaderboard" class="text-red-500 text-xs hover:text-red-600">View all →</a>
-            </div>
-            <div class="space-y-3">
-              @for (entry of topPlayers; track entry.rank) {
-                <div class="flex items-center gap-3">
-                  <div [class]="getRankClass(entry.rank)">{{ entry.rank }}</div>
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {{ entry.avatar }}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-slate-800 text-sm font-medium truncate">{{ entry.name }}</div>
-                    <div class="text-muted text-xs">{{ entry.score.toLocaleString('en-IN') }} pts</div>
-                  </div>
-                </div>
-              }
-            </div>
+        <!-- Recent Winners -->
+        <div class="glass-card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-slate-800 font-bold text-sm">🎉 Recent Winners</h3>
           </div>
-
-          <!-- Recent Winners -->
-          <div class="glass-card p-5">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-slate-800 font-bold">Recent Winners</h3>
-            </div>
-            <div class="space-y-3">
-              @for (winner of recentWinners; track winner.userId) {
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {{ winner.avatar }}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-slate-800 text-sm font-medium truncate">{{ winner.name }}</div>
-                    <div class="text-muted text-xs truncate">{{ winner.quizTitle }}</div>
-                  </div>
-                  <div class="text-green-400 text-sm font-bold flex-shrink-0">+₹{{ winner.prize.toLocaleString('en-IN') }}</div>
+          <div class="space-y-3">
+            @for (winner of recentWinners; track winner.userId) {
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  {{ winner.avatar }}
                 </div>
-              }
-            </div>
-          </div>
-
-          <!-- Quick Nav -->
-          <div class="grid grid-cols-3 gap-3">
-            <a routerLink="/wallet" class="glass-card-light p-3 text-center hover:border-red-300 transition-all cursor-pointer">
-              <div class="text-xl mb-1">💳</div>
-              <div class="text-slate-700 text-xs font-medium">Wallet</div>
-            </a>
-            <a routerLink="/profile" class="glass-card-light p-3 text-center hover:border-red-300 transition-all cursor-pointer">
-              <div class="text-xl mb-1">👤</div>
-              <div class="text-slate-700 text-xs font-medium">Profile</div>
-            </a>
-            <a routerLink="/leaderboard" class="glass-card-light p-3 text-center hover:border-red-300 transition-all cursor-pointer">
-              <div class="text-xl mb-1">🏆</div>
-              <div class="text-slate-700 text-xs font-medium">Rankings</div>
-            </a>
+                <div class="flex-1 min-w-0">
+                  <div class="text-slate-800 text-xs font-semibold truncate">{{ winner.name }}</div>
+                  <div class="text-muted text-xs truncate">{{ winner.quizTitle }}</div>
+                </div>
+                <div class="text-green-600 text-xs font-bold flex-shrink-0">+₹{{ winner.prize.toLocaleString('en-IN') }}</div>
+              </div>
+            }
           </div>
         </div>
       </div>
+
+      <!-- How it works -->
+      <div class="glass-card p-5">
+        <h3 class="text-slate-800 font-bold mb-4 text-sm">How QuizArena Works</h3>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div>
+            <div class="text-2xl mb-2">💰</div>
+            <div class="text-xs font-semibold text-slate-700">Add Money</div>
+            <div class="text-xs text-muted mt-1">UPI, Card, Net Banking</div>
+          </div>
+          <div>
+            <div class="text-2xl mb-2">🎯</div>
+            <div class="text-xs font-semibold text-slate-700">Join & Play</div>
+            <div class="text-xs text-muted mt-1">Answer fast, score high</div>
+          </div>
+          <div>
+            <div class="text-2xl mb-2">🏆</div>
+            <div class="text-xs font-semibold text-slate-700">Win Prizes</div>
+            <div class="text-xs text-muted mt-1">Instant wallet credit</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   `
 })
@@ -221,7 +193,6 @@ export class DashboardComponent implements OnInit {
   upcomingQuizzes: Quiz[] = [];
   topPlayers: LeaderboardEntry[] = [];
   recentWinners: Winner[] = [];
-
   user = this.auth.currentUser;
 
   constructor(private auth: AuthService, private data: DataService, private state: StateService) {}
