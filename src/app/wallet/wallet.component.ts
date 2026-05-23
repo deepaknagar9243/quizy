@@ -65,10 +65,10 @@ import { Transaction, PaymentRequest, WithdrawalRequest } from '../shared/models
 
       <!-- Transactions -->
       <div class="glass-card overflow-hidden">
-        <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 class="text-slate-800 font-bold">Transaction History</h3>
           <div class="flex items-center gap-3">
-            <select class="input-field py-1.5 text-xs w-auto" [(ngModel)]="txFilter">
+            <select class="input-field py-1.5 text-sm w-40" [(ngModel)]="txFilter">
               <option value="">All</option>
               <option value="deposit">Deposits</option>
               <option value="withdrawal">Withdrawals</option>
@@ -85,21 +85,21 @@ import { Transaction, PaymentRequest, WithdrawalRequest } from '../shared/models
 
         <div class="divide-y divide-slate-100">
           @for (tx of filteredTx(); track tx.id) {
-            <div class="px-5 py-4 flex items-center gap-4 table-row">
+            <div class="px-5 py-4 grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
                 [class]="getTxBg(tx.type)">
                 {{ getTxIcon(tx.type) }}
               </div>
               <div class="flex-1 min-w-0">
                 <div class="text-slate-800 font-medium text-sm truncate">{{ tx.description }}</div>
-                <div class="flex items-center gap-2 mt-0.5">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                   <span class="text-muted text-xs">{{ formatDate(tx.date) }}</span>
                   @if (tx.reference) {
                     <span class="text-xs text-slate-400">· {{ tx.reference }}</span>
                   }
                 </div>
               </div>
-              <div class="text-right flex-shrink-0">
+              <div class="text-right min-w-24">
                 <div class="font-bold text-sm" [class]="tx.amount > 0 ? 'text-green-600' : 'text-red-500'">
                   {{ tx.amount > 0 ? '+' : '' }}₹{{ Math.abs(tx.amount).toLocaleString('en-IN') }}
                 </div>

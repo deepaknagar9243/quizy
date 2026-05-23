@@ -49,8 +49,8 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
                 <div class="text-muted text-xs mt-1">Per Question</div>
               </div>
               <div class="stat-card text-center">
-                <div class="text-xl font-bold text-slate-800">100</div>
-                <div class="text-muted text-xs mt-1">Points Each</div>
+                <div class="text-xl font-bold text-slate-800">Fastest</div>
+                <div class="text-muted text-xs mt-1">Tie Breaker</div>
               </div>
             </div>
 
@@ -83,8 +83,8 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
               </div>
               <div class="flex items-center gap-4">
                 <div class="text-center">
-                  <div class="text-red-600 font-bold text-lg leading-none">{{ currentScore() }}</div>
-                  <div class="text-muted text-xs">Score</div>
+                  <div class="text-red-600 font-bold text-lg leading-none">{{ correctAnswers() }}</div>
+                  <div class="text-muted text-xs">Correct</div>
                 </div>
                 <div class="text-center">
                   <div class="text-slate-800 font-bold text-lg leading-none">{{ currentQuestionIndex() + 1 }}/{{ questions.length }}</div>
@@ -118,7 +118,6 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
                 <span class="text-xs text-red-600 font-semibold bg-red-50 px-3 py-1 rounded-full">
                   Question {{ currentQuestionIndex() + 1 }} of {{ questions.length }}
                 </span>
-                <span class="text-xs text-muted">{{ currentQuestion()!.points }} points</span>
               </div>
 
               <h3 class="text-slate-800 text-lg font-semibold mb-6 leading-relaxed">
@@ -153,7 +152,7 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
                     ? 'bg-green-50 border border-green-200 text-green-700'
                     : 'bg-red-50 border border-red-200 text-red-600'">
                   @if (selectedAnswer() === currentQuestion()!.correctAnswer) {
-                    <span class="font-semibold">✓ Correct! +{{ lastPointsEarned() }} points</span>
+                    <span class="font-semibold">Correct answer recorded</span>
                   } @else if (selectedAnswer() === null) {
                     <span class="font-semibold">⏱ Time's up! Answer: "{{ currentQuestion()!.options[currentQuestion()!.correctAnswer] }}"</span>
                   } @else {
@@ -193,7 +192,10 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
                     <div class="text-slate-800 text-xs font-medium truncate">{{ entry.name }}</div>
                     <div class="text-muted text-xs">{{ entry.answeredCount }}/{{ currentQuestionIndex() + 1 }} ans</div>
                   </div>
-                  <div class="text-red-600 text-xs font-bold">{{ entry.score }}</div>
+                  <div class="text-right flex-shrink-0">
+                    <div class="text-red-600 text-xs font-bold">{{ entry.correctCount }}/{{ entry.answeredCount }}</div>
+                    <div class="text-muted text-[10px]">{{ formatMs(entry.totalTimeMs) }}</div>
+                  </div>
                 </div>
               }
             </div>
@@ -215,8 +217,8 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
 
             <div class="grid grid-cols-3 gap-4 mb-6">
               <div class="stat-card text-center">
-                <div class="text-2xl font-bold text-red-600">{{ currentScore() }}</div>
-                <div class="text-muted text-xs mt-1">Final Score</div>
+                <div class="text-2xl font-bold text-red-600">{{ correctAnswers() }}</div>
+                <div class="text-muted text-xs mt-1">Correct Answers</div>
               </div>
               <div class="stat-card text-center">
                 <div class="text-2xl font-bold text-green-600">{{ correctAnswers() }}/{{ questions.length }}</div>
@@ -238,7 +240,7 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
             } @else {
               <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-6">
                 <p class="text-slate-600 text-sm">Better luck next time! Top 3 players win prizes.</p>
-                <p class="text-muted text-xs mt-1">Your score: {{ currentScore() }} pts · Rank: #{{ finalRank() }}</p>
+                <p class="text-muted text-xs mt-1">{{ correctAnswers() }} correct answers · Rank: #{{ finalRank() }}</p>
               </div>
             }
 
@@ -277,11 +279,9 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
   selectedAnswer = signal<number | null>(null);
   showResult = signal(false);
   timeLeft = signal(15);
-  currentScore = signal(0);
   correctAnswers = signal(0);
   finalRank = signal(12);
   prizeMoney = signal(0);
-  lastPointsEarned = signal(0);
   quizStartTime = 0;
 
   private timer: any;
@@ -290,7 +290,10 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
   liveRank = computed(() => this.livePlayers.find(p => p.isCurrentUser)?.rank ?? this.totalPlayers);
   activePlayers = computed(() => Math.max(1, this.totalPlayers - this.currentQuestionIndex() * 8));
   accuracy = computed(() => this.questions.length > 0 ? Math.round((this.correctAnswers() / this.questions.length) * 100) : 0);
-  insufficientBalance = computed(() => (this.auth.currentUser()?.walletBalance ?? 0) < 75);
+  insufficientBalance = computed(() => {
+    const user = this.auth.currentUser();
+    return ((user?.walletBalance ?? 0) + (user?.bonusBalance ?? 0)) < 75;
+  });
 
   constructor(private data: DataService, private auth: AuthService, private state: StateService) {}
 
@@ -307,8 +310,10 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       userId: e.userId,
       name: e.name,
       avatar: e.avatar,
-      score: Math.floor(Math.random() * 400) + 100,
+      score: 0,
+      correctCount: 0,
       answeredCount: 0,
+      totalTimeMs: 0,
       isCurrentUser: false as boolean
     }));
 
@@ -319,7 +324,9 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       name: user?.name || 'You',
       avatar: user?.avatar || 'ME',
       score: 0,
+      correctCount: 0,
       answeredCount: 0,
+      totalTimeMs: 0,
       isCurrentUser: true
     };
     base.splice(4, 0, me);
@@ -327,8 +334,7 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
   }
 
   startQuiz() {
-    // Deduct entry fee
-    this.auth.updateWallet(-75);
+    if (this.auth.payEntryFee(75) === 'insufficient') return;
     this.state.addTransaction({
       type: 'entry_fee',
       amount: -75,
@@ -362,13 +368,7 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
 
     const q = this.currentQuestion();
     if (index === q.correctAnswer) {
-      const bonus = Math.floor((this.timeLeft() / 15) * 50);
-      const pts = q.points + bonus;
-      this.lastPointsEarned.set(pts);
-      this.currentScore.update(s => s + pts);
       this.correctAnswers.update(c => c + 1);
-    } else {
-      this.lastPointsEarned.set(0);
     }
 
     this.updateMyScore();
@@ -377,7 +377,6 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
 
   onTimeUp() {
     this.showResult.set(true);
-    this.lastPointsEarned.set(0);
     this.updateMyScore();
     setTimeout(() => this.nextQuestion(), 2000);
   }
@@ -389,8 +388,10 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       const correct = Math.random() > 0.4;
       return {
         ...p,
-        score: p.score + (answered && correct ? Math.floor(Math.random() * 130) + 70 : 0),
-        answeredCount: p.answeredCount + (answered ? 1 : 0)
+        score: p.score + (answered && correct ? 1 : 0),
+        correctCount: p.correctCount + (answered && correct ? 1 : 0),
+        answeredCount: p.answeredCount + (answered ? 1 : 0),
+        totalTimeMs: p.totalTimeMs + (answered ? (15 - this.timeLeft()) * 1000 : 15000)
       };
     });
     this.reRankPlayers();
@@ -398,14 +399,20 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
 
   updateMyScore() {
     this.livePlayers = this.livePlayers.map(p =>
-      p.isCurrentUser ? { ...p, score: this.currentScore(), answeredCount: this.currentQuestionIndex() + 1 } : p
+      p.isCurrentUser ? {
+        ...p,
+        score: this.correctAnswers(),
+        correctCount: this.correctAnswers(),
+        answeredCount: this.currentQuestionIndex() + 1,
+        totalTimeMs: p.totalTimeMs + (15 - this.timeLeft()) * 1000
+      } : p
     );
     this.reRankPlayers();
   }
 
   reRankPlayers() {
     this.livePlayers = [...this.livePlayers]
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => b.correctCount - a.correctCount || a.totalTimeMs - b.totalTimeMs || b.answeredCount - a.answeredCount)
       .map((p, i) => ({ ...p, rank: i + 1 }));
   }
 
@@ -437,7 +444,7 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       quizId: 'q3',
       quizTitle: 'Sports Mania Challenge',
       userId: user?.id || 'me',
-      score: this.currentScore(),
+      score: this.correctAnswers(),
       correctAnswers: this.correctAnswers(),
       totalQuestions: this.questions.length,
       rank,
@@ -453,7 +460,7 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       user?.id || 'me',
       user?.name || 'You',
       user?.avatar || 'ME',
-      this.currentScore(),
+      this.correctAnswers(),
       prize,
       rank <= 3
     );
@@ -494,7 +501,7 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       this.state.addNotification({
         type: 'quiz',
         title: 'Quiz Completed',
-        message: `You scored ${this.currentScore()} pts (Rank #${rank}) in Sports Mania Challenge`
+        message: `You answered ${this.correctAnswers()} correctly (Rank #${rank}) in Sports Mania Challenge`
       });
     }
 
@@ -507,12 +514,14 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
     this.selectedAnswer.set(null);
     this.showResult.set(false);
     this.timeLeft.set(15);
-    this.currentScore.set(0);
     this.correctAnswers.set(0);
     this.finalRank.set(12);
     this.prizeMoney.set(0);
-    this.lastPointsEarned.set(0);
     this.livePlayers = this.buildLivePlayers();
+  }
+
+  formatMs(ms: number): string {
+    return `${(ms / 1000).toFixed(1)}s`;
   }
 
   getRankClass(rank: number): string {

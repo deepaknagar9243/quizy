@@ -75,7 +75,7 @@ import { AdminStats } from '../../shared/models/models';
           </div>
           <div class="divide-y divide-slate-100">
             @for (user of recentUsers; track user.id) {
-              <div class="px-5 py-3 flex items-center gap-3 table-row">
+              <div class="px-5 py-3 flex items-center gap-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                   {{ user.name.charAt(0) }}
                 </div>
@@ -98,7 +98,7 @@ import { AdminStats } from '../../shared/models/models';
           </div>
           <div class="divide-y divide-slate-100">
             @for (quiz of todayQuizzes; track quiz.id) {
-              <div class="px-5 py-3 flex items-center gap-3 table-row">
+              <div class="px-5 py-3 flex items-center gap-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
                 <div class="flex-1 min-w-0">
                   <div class="text-slate-800 text-sm font-medium truncate">{{ quiz.title }}</div>
                   <div class="text-muted text-xs">{{ quiz.totalParticipants }} / {{ quiz.maxParticipants }} players</div>

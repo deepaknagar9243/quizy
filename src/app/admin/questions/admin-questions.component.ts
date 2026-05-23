@@ -65,7 +65,6 @@ import { Question } from '../../shared/models/models';
                 </div>
                 <div class="flex items-center gap-4 mt-3 text-xs text-muted">
                   <span>⏱ {{ question.timeLimit }}s</span>
-                  <span>⚡ {{ question.points }} pts</span>
                 </div>
               </div>
               <div class="flex gap-2 flex-shrink-0">
@@ -149,15 +148,6 @@ import { Question } from '../../shared/models/models';
                     <option value="15">15 seconds</option>
                     <option value="20">20 seconds</option>
                     <option value="30">30 seconds</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-600 mb-2">Points</label>
-                  <select class="input-field" [(ngModel)]="form.points">
-                    <option value="50">50 points</option>
-                    <option value="100">100 points</option>
-                    <option value="150">150 points</option>
-                    <option value="200">200 points</option>
                   </select>
                 </div>
               </div>

@@ -133,7 +133,7 @@ import { Quiz, LeaderboardEntry, Winner } from '../shared/models/models';
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-slate-800 text-xs font-semibold truncate">{{ entry.name }}</div>
-                  <div class="text-muted text-xs">{{ entry.score.toLocaleString('en-IN') }} pts</div>
+                  <div class="text-muted text-xs">{{ entry.score.toLocaleString('en-IN') }} correct</div>
                 </div>
                 <div class="text-green-600 text-xs font-bold flex-shrink-0">₹{{ (entry.totalEarnings/1000).toFixed(0) }}K</div>
               </div>
@@ -175,7 +175,7 @@ import { Quiz, LeaderboardEntry, Winner } from '../shared/models/models';
           <div>
             <div class="text-2xl mb-2">🎯</div>
             <div class="text-xs font-semibold text-slate-700">Join & Play</div>
-            <div class="text-xs text-muted mt-1">Answer fast, score high</div>
+            <div class="text-xs text-muted mt-1">Correct answers, fastest time</div>
           </div>
           <div>
             <div class="text-2xl mb-2">🏆</div>

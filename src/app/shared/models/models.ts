@@ -5,13 +5,17 @@ export interface User {
   email: string;
   mobile: string;
   avatar: string;
-  walletBalance: number;
+  walletBalance: number;       // real money (withdrawable)
+  bonusBalance: number;        // bonus/referral (NOT withdrawable)
   totalWins: number;
   totalQuizzes: number;
   totalEarnings: number;
   rank: number;
   isAdmin?: boolean;
   kycVerified?: boolean;
+  referralCode?: string;
+  referredBy?: string;
+  referralCount?: number;
   createdAt?: string;
 }
 
@@ -64,6 +68,19 @@ export interface QuizResult {
   completedAt: string;
 }
 
+// ─── Live Player (during quiz) ────────────────────────────────────────────────
+export interface LivePlayer {
+  rank: number;
+  userId: string;
+  name: string;
+  avatar: string;
+  score: number;
+  correctCount: number;
+  answeredCount: number;
+  totalTimeMs: number;
+  isCurrentUser?: boolean;
+}
+
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 export interface LeaderboardEntry {
   rank: number;
@@ -75,28 +92,18 @@ export interface LeaderboardEntry {
   totalEarnings: number;
 }
 
-// ─── Live Leaderboard (during quiz) ──────────────────────────────────────────
-export interface LivePlayer {
-  rank: number;
-  userId: string;
-  name: string;
-  avatar: string;
-  score: number;
-  answeredCount: number;
-  isCurrentUser?: boolean;
-}
-
 // ─── Transaction ──────────────────────────────────────────────────────────────
 export interface Transaction {
   id: string;
   userId?: string;
-  type: 'deposit' | 'withdrawal' | 'prize' | 'entry_fee' | 'refund' | 'bonus';
+  type: 'deposit' | 'withdrawal' | 'prize' | 'entry_fee' | 'refund' | 'bonus' | 'referral';
   amount: number;
   description: string;
   date: string;
   status: 'success' | 'pending' | 'failed';
   reference?: string;
   paymentMethod?: string;
+  isBonus?: boolean;           // bonus = not withdrawable
 }
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
@@ -146,7 +153,37 @@ export interface Winner {
   date: string;
 }
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
+// ─── Admin Settings ───────────────────────────────────────────────────────────
+export interface AdminSettings {
+  registrationBonus: number;       // e.g. 50 — given on signup (bonus, not withdrawable)
+  referralBonus: number;           // e.g. 25 — given to referrer per successful referral
+  referralJoinBonus: number;       // e.g. 25 — given to new user who joined via referral
+  referralCodeValidityHours: number;
+  minWithdrawal: number;           // e.g. 100
+  maxWithdrawal: number;           // e.g. 50000
+  bonusWithdrawable: boolean;      // always false — bonus can't be withdrawn
+}
+
+// ─── Referral ─────────────────────────────────────────────────────────────────
+export interface ReferralCodeEntry {
+  userId: string;
+  code: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface ReferralRecord {
+  referrerId: string;
+  referrerName: string;
+  referredId: string;
+  referredName: string;
+  bonusPaid: number;
+  joinBonusPaid?: number;
+  code?: string;
+  date: string;
+}
+
+// ─── Admin Stats ──────────────────────────────────────────────────────────────
 export interface AdminStats {
   totalUsers: number;
   totalQuizzes: number;
@@ -161,7 +198,7 @@ export interface AdminStats {
 // ─── Notification ─────────────────────────────────────────────────────────────
 export interface AppNotification {
   id: string;
-  type: 'prize' | 'deposit' | 'withdrawal' | 'quiz' | 'system';
+  type: 'prize' | 'deposit' | 'withdrawal' | 'quiz' | 'system' | 'referral' | 'bonus';
   title: string;
   message: string;
   read: boolean;

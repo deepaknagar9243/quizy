@@ -10,7 +10,7 @@ import { PaymentRequest, PaymentResponse, WithdrawalRequest, WithdrawalResponse 
 export class ApiService {
 
   // ─── BASE URL (change when backend is ready) ────────────────────────────────
-  // private baseUrl = 'https://api.quizarena.in/v1';
+   private baseUrl = 'https://api.quizarena.in/v1';
 
   // ─── Payment / Deposit ───────────────────────────────────────────────────────
   initiateDeposit(req: PaymentRequest): Promise<PaymentResponse> {
