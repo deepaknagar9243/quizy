@@ -10,12 +10,13 @@ import { AuthService } from '../../shared/services/auth.service';
   template: `
     <div class="flex h-screen overflow-hidden bg-slate-100">
 <aside
-[class.translate-x-0]="sidebarOpen"
-[class.-translate-x-full]="!sidebarOpen"
-class="fixed lg:static inset-y-0 left-0 z-50
-       w-64 bg-white border-r border-slate-200
-       transform transition-transform duration-300
-       lg:translate-x-0 flex flex-col">
+  [class.translate-x-0]="sidebarOpen"
+  [class.-translate-x-full]="!sidebarOpen"
+  class="fixed lg:static top-0 left-0 h-full
+         z-50 w-64 bg-white
+         border-r border-slate-200
+         transition-transform duration-300
+         lg:translate-x-0 flex flex-col">
        
        <div
   *ngIf="sidebarOpen"
