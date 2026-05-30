@@ -9,8 +9,21 @@ import { AuthService } from '../../shared/services/auth.service';
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <div class="flex h-screen overflow-hidden bg-slate-100">
-      <aside class="hidden lg:flex w-64 flex-col flex-shrink-0 border-r border-slate-200 bg-white">
-        <div class="flex flex-col h-full">
+<aside
+[class.translate-x-0]="sidebarOpen"
+[class.-translate-x-full]="!sidebarOpen"
+class="fixed lg:static inset-y-0 left-0 z-50
+       w-64 bg-white border-r border-slate-200
+       transform transition-transform duration-300
+       lg:translate-x-0 flex flex-col">
+       
+       <div
+  *ngIf="sidebarOpen"
+  class="fixed inset-0 bg-black/40 z-40 lg:hidden"
+  (click)="sidebarOpen=false">
+</div>
+
+       <div class="flex flex-col h-full">
           <div class="p-5 border-b border-slate-200">
             <div class="flex items-center gap-3">
               <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
@@ -78,6 +91,18 @@ import { AuthService } from '../../shared/services/auth.service';
 
       <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header class="h-16 flex items-center px-6 border-b border-slate-200 bg-white">
+          <button
+  class="lg:hidden mr-3"
+  (click)="toggleSidebar()">
+
+  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"/>
+  </svg>
+
+</button>
           <div class="flex items-center gap-3">
             <span class="text-slate-500 text-sm">Admin</span>
             <span class="text-slate-300">/</span>
@@ -97,5 +122,11 @@ import { AuthService } from '../../shared/services/auth.service';
 })
 export class AdminLayoutComponent {
   constructor(private auth: AuthService) {}
+  
+  sidebarOpen = false;
+
+toggleSidebar() {
+  this.sidebarOpen = !this.sidebarOpen;
+}
   logout() { this.auth.logout(); }
 }
