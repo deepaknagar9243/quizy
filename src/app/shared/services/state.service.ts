@@ -46,6 +46,28 @@ export class StateService {
     return newTx;
   }
 
+  updateTransactionStatus(id: string, status: Transaction['status'], reference?: string): Transaction | null {
+    let updatedTx: Transaction | null = null;
+    const updated = this.transactions().map(tx => {
+      if (tx.id !== id) return tx;
+      updatedTx = {
+        ...tx,
+        status,
+        reference: reference || tx.reference
+      };
+      return updatedTx;
+    });
+    this.transactions.set(updated);
+    this.save(STORAGE_KEYS.TRANSACTIONS, updated);
+    return updatedTx;
+  }
+
+  getPendingPayouts(): Transaction[] {
+    return this.transactions().filter(tx =>
+      tx.status === 'pending' && tx.type === 'withdrawal'
+    );
+  }
+
   // ─── Leaderboard ─────────────────────────────────────────────────────────────
   updateUserInLeaderboard(userId: string, name: string, avatar: string, scoreToAdd: number, prizeWon: number, isWin: boolean) {
     let board = [...this.leaderboard()];

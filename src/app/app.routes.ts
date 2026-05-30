@@ -13,6 +13,10 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent)
   },
   {
+    path: 'forgot-password',
+    loadComponent: () => import('./auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+  },
+  {
     path: '',
     loadComponent: () => import('./layouts/user-layout/user-layout.component').then(m => m.UserLayoutComponent),
     canActivate: [authGuard],
@@ -32,6 +36,10 @@ export const routes: Routes = [
       {
         path: 'wallet',
         loadComponent: () => import('./wallet/wallet.component').then(m => m.WalletComponent)
+      },
+      {
+        path: 'referrals',
+        loadComponent: () => import('./referrals/referrals.component').then(m => m.ReferralsComponent)
       },
       {
         path: 'profile',
@@ -60,6 +68,10 @@ export const routes: Routes = [
       {
         path: 'questions',
         loadComponent: () => import('./admin/questions/admin-questions.component').then(m => m.AdminQuestionsComponent)
+      },
+      {
+        path: 'payments',
+        loadComponent: () => import('./admin/payments/admin-payments.component').then(m => m.AdminPaymentsComponent)
       }
     ]
   },

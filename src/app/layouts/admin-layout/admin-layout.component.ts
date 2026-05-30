@@ -47,6 +47,14 @@ import { AuthService } from '../../shared/services/auth.service';
               Manage Questions
             </a>
 
+            <a routerLink="/admin/payments" routerLinkActive="active" class="sidebar-link">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a4 4 0 00-8 0v2M5 11h14l-1 9H6l-1-9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15h6"/>
+              </svg>
+              Payments & Rewards
+            </a>
+
             <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 pt-4 mb-3">Navigation</div>
 
             <a routerLink="/dashboard" class="sidebar-link">

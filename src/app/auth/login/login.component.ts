@@ -60,7 +60,7 @@ import { AuthService } from '../../shared/services/auth.service';
             <div>
               <div class="flex items-center justify-between mb-2">
                 <label class="text-sm font-semibold text-slate-700">Password</label>
-                <a href="#" class="text-xs text-red-500 font-medium">Forgot?</a>
+                <a routerLink="/forgot-password" class="text-xs text-red-500 font-medium">Forgot?</a>
               </div>
               <div class="relative">
                 <input
@@ -98,8 +98,8 @@ import { AuthService } from '../../shared/services/auth.service';
           <!-- Demo hint -->
           <div class="p-3 rounded-xl bg-blue-50 border border-blue-100 text-center mb-4">
             <p class="text-xs text-blue-700 font-semibold mb-1">🎮 Demo Mode</p>
-            <p class="text-xs text-blue-600">Any email + any password to login</p>
-            <p class="text-xs text-blue-600">Admin: admin&#64;quiz.com</p>
+            <p class="text-xs text-blue-600">Player: demo&#64;quiz.com / demo123</p>
+            <p class="text-xs text-blue-600">Admin: admin&#64;quiz.com / admin123</p>
           </div>
 
           <p class="text-center text-sm text-slate-500">
@@ -132,9 +132,13 @@ export class LoginComponent {
     this.loading.set(true);
     this.error.set('');
     setTimeout(() => {
-      this.auth.login(this.email.trim(), this.password);
+      const loggedIn = this.auth.login(this.email.trim(), this.password);
       this.loading.set(false);
-      this.router.navigate([this.email === 'admin@quiz.com' ? '/admin/dashboard' : '/dashboard']);
+      if (!loggedIn) {
+        this.error.set('Invalid email/mobile or password');
+        return;
+      }
+      this.router.navigate([this.email.trim().toLowerCase() === 'admin@quiz.com' ? '/admin/dashboard' : '/dashboard']);
     }, 800);
   }
 }

@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
+import { ReferralService } from '../../shared/services/referral.service';
 
 @Component({
   selector: 'app-register',
@@ -84,6 +85,11 @@ import { AuthService } from '../../shared/services/auth.service';
                 </div>
               </div>
 
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Referral Code <span class="text-slate-400 font-normal">(optional)</span></label>
+                <input type="text" class="input-field uppercase" placeholder="Friend's invite code" [(ngModel)]="referralCode" autocomplete="off" />
+              </div>
+
               <label class="flex items-start gap-3 cursor-pointer">
                 <div class="relative mt-0.5 flex-shrink-0">
                   <input type="checkbox" [(ngModel)]="agreed" class="sr-only" />
@@ -123,27 +129,53 @@ import { AuthService } from '../../shared/services/auth.service';
     </div>
   `
 })
-export class RegisterComponent {
-  name = ''; email = ''; mobile = ''; password = '';
+export class RegisterComponent implements OnInit {
+  name = ''; email = ''; mobile = ''; password = ''; referralCode = '';
   agreed = false;
   loading = signal(false);
   error = signal('');
   showPwd = signal(false);
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private referral: ReferralService
+  ) {}
+
+  ngOnInit() {
+    this.referralCode = this.route.snapshot.queryParamMap.get('ref')?.toUpperCase() || '';
+  }
 
   onRegister() {
     if (!this.name.trim()) { this.error.set('Please enter your full name'); return; }
     if (this.mobile.length !== 10 || !/^\d+$/.test(this.mobile)) { this.error.set('Enter a valid 10-digit mobile number'); return; }
     if (!this.email.includes('@')) { this.error.set('Enter a valid email address'); return; }
     if (this.password.length < 6) { this.error.set('Password must be at least 6 characters'); return; }
+    if (this.referralCode.trim()) {
+      const referral = this.referral.validateCode(this.referralCode);
+      if (!referral.valid) {
+        this.error.set(referral.reason || 'Invalid referral code');
+        return;
+      }
+    }
     if (!this.agreed) { this.error.set('Please accept the terms to continue'); return; }
 
     this.loading.set(true);
     this.error.set('');
     setTimeout(() => {
-      this.auth.register(this.name.trim(), this.email.trim(), this.mobile, this.password);
+      const registered = this.auth.register(
+        this.name.trim(),
+        this.email.trim(),
+        this.mobile,
+        this.password,
+        this.referralCode.trim()
+      );
       this.loading.set(false);
+      if (!registered) {
+        this.error.set('An account with this email or mobile already exists');
+        return;
+      }
       this.router.navigate(['/dashboard']);
     }, 900);
   }

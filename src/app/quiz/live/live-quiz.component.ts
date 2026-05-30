@@ -233,14 +233,14 @@ import { Question, LivePlayer, QuizResult } from '../../shared/models/models';
             <!-- Prize won -->
             @if (prizeMoney() > 0) {
               <div class="p-4 rounded-xl bg-green-50 border border-green-200 mb-6">
-                <p class="text-green-700 font-bold text-lg">🎉 You Won!</p>
-                <p class="text-green-600 text-sm mt-1">₹{{ prizeMoney().toLocaleString('en-IN') }} added to your wallet</p>
-                <p class="text-green-500 text-xs mt-1">Rank #{{ finalRank() }} · {{ finalRank() === 1 ? '50%' : finalRank() === 2 ? '30%' : '20%' }} of prize pool</p>
+                <p class="text-green-700 font-bold text-lg">Prize Added to Wallet</p>
+                <p class="text-green-600 text-sm mt-1">Rs {{ prizeMoney().toLocaleString('en-IN') }} added as virtual withdrawable balance</p>
+                <p class="text-green-500 text-xs mt-1">Rank #{{ finalRank() }} - {{ finalRank() === 1 ? '50%' : finalRank() === 2 ? '30%' : '20%' }} of prize pool</p>
               </div>
             } @else {
               <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-6">
                 <p class="text-slate-600 text-sm">Better luck next time! Top 3 players win prizes.</p>
-                <p class="text-muted text-xs mt-1">{{ correctAnswers() }} correct answers · Rank: #{{ finalRank() }}</p>
+                <p class="text-muted text-xs mt-1">{{ correctAnswers() }} correct answers - Rank: #{{ finalRank() }}</p>
               </div>
             }
 
@@ -336,6 +336,7 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
   startQuiz() {
     if (this.auth.payEntryFee(75) === 'insufficient') return;
     this.state.addTransaction({
+      userId: this.auth.currentUser()?.id,
       type: 'entry_fee',
       amount: -75,
       description: 'Entry fee - Sports Mania Challenge',
@@ -473,10 +474,11 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       this.state.getUserRank(user?.id || 'me')
     );
 
-    // Prize payout
+    // Prize is virtual wallet balance. Real money moves only when the user withdraws.
     if (prize > 0) {
       this.auth.updateWallet(prize);
       this.state.addTransaction({
+        userId: user?.id || 'me',
         type: 'prize',
         amount: prize,
         description: `Prize won - Sports Mania Challenge (Rank #${rank})`,
@@ -494,8 +496,8 @@ export class LiveQuizComponent implements OnInit, OnDestroy {
       });
       this.state.addNotification({
         type: 'prize',
-        title: '🎉 You Won!',
-        message: `₹${prize.toLocaleString('en-IN')} prize added for Rank #${rank} in Sports Mania Challenge`
+        title: 'Prize Added to Wallet',
+        message: `Rs ${prize.toLocaleString('en-IN')} virtual prize balance added for Rank #${rank}`
       });
     } else {
       this.state.addNotification({

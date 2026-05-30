@@ -24,7 +24,10 @@ import { Transaction, PaymentRequest, WithdrawalRequest } from '../shared/models
           <div>
             <p class="text-muted text-sm mb-1">Available Balance</p>
             <div class="text-4xl font-bold text-slate-800">₹{{ user()?.walletBalance?.toLocaleString('en-IN') }}</div>
-            <p class="text-muted text-xs mt-1">Withdrawable: ₹{{ withdrawable().toLocaleString('en-IN') }}</p>
+            <p class="text-muted text-xs mt-1">Withdrawable now: ₹{{ withdrawable().toLocaleString('en-IN') }}</p>
+            @if (pendingWithdrawals() > 0) {
+              <p class="text-orange-600 text-xs mt-1">Pending withdrawal requests: ₹{{ pendingWithdrawals().toLocaleString('en-IN') }}</p>
+            }
           </div>
           <div class="flex flex-wrap gap-3">
             <button class="btn-primary" (click)="openDeposit()">
@@ -299,25 +302,33 @@ export class WalletComponent implements OnInit {
     { id: 'netbanking', name: 'Net Banking', icon: '🏦', desc: 'All major banks' },
   ];
 
+  userTransactions = computed(() => {
+    const userId = this.user()?.id;
+    return this.state.transactions().filter(tx => !tx.userId || tx.userId === userId);
+  });
+
   filteredTx = computed(() => {
-    const txs = this.state.transactions();
+    const txs = this.userTransactions();
     if (!this.txFilter) return txs;
     return txs.filter(t => t.type === this.txFilter);
   });
 
   totalDeposited = computed(() =>
-    this.state.transactions().filter(t => t.type === 'deposit' && t.status === 'success').reduce((s, t) => s + t.amount, 0)
+    this.userTransactions().filter(t => t.type === 'deposit' && t.status === 'success').reduce((s, t) => s + t.amount, 0)
   );
   totalWithdrawn = computed(() =>
-    Math.abs(this.state.transactions().filter(t => t.type === 'withdrawal' && t.status === 'success').reduce((s, t) => s + t.amount, 0))
+    Math.abs(this.userTransactions().filter(t => t.type === 'withdrawal' && t.status === 'success').reduce((s, t) => s + t.amount, 0))
   );
   totalPrize = computed(() =>
-    this.state.transactions().filter(t => t.type === 'prize').reduce((s, t) => s + t.amount, 0)
+    this.userTransactions().filter(t => t.type === 'prize' && t.status === 'success').reduce((s, t) => s + t.amount, 0)
   );
   totalFees = computed(() =>
-    Math.abs(this.state.transactions().filter(t => t.type === 'entry_fee').reduce((s, t) => s + t.amount, 0))
+    Math.abs(this.userTransactions().filter(t => t.type === 'entry_fee').reduce((s, t) => s + t.amount, 0))
   );
-  withdrawable = computed(() => Math.max(0, this.user()?.walletBalance ?? 0));
+  pendingWithdrawals = computed(() =>
+    Math.abs(this.userTransactions().filter(t => t.type === 'withdrawal' && t.status === 'pending').reduce((s, t) => s + t.amount, 0))
+  );
+  withdrawable = computed(() => Math.max(0, (this.user()?.walletBalance ?? 0) - this.pendingWithdrawals()));
 
   constructor(private auth: AuthService, private state: StateService, private api: ApiService) {}
 
@@ -339,6 +350,7 @@ export class WalletComponent implements OnInit {
       const res = await this.api.initiateDeposit(req);
       this.auth.updateWallet(this.depositAmt);
       this.state.addTransaction({
+        userId: this.user()?.id,
         type: 'deposit',
         amount: this.depositAmt,
         description: `Wallet deposit via ${this.depositMethod.toUpperCase()}`,
@@ -381,22 +393,22 @@ export class WalletComponent implements OnInit {
 
     try {
       const res = await this.api.initiateWithdrawal(req);
-      this.auth.updateWallet(-this.withdrawAmt);
       this.state.addTransaction({
+        userId: this.user()?.id,
         type: 'withdrawal',
         amount: -this.withdrawAmt,
         description: `Withdrawal via ${this.withdrawMethod === 'upi' ? 'UPI' : 'Bank Transfer'}`,
         status: 'pending',
         reference: res.referenceId
       });
-      this.state.addNotification({ type: 'withdrawal', title: 'Withdrawal Requested', message: `₹${this.withdrawAmt.toLocaleString('en-IN')} withdrawal initiated. ${res.estimatedTime}` });
+      this.state.addNotification({ type: 'withdrawal', title: 'Withdrawal Requested', message: `₹${this.withdrawAmt.toLocaleString('en-IN')} withdrawal requested. Admin will pay and debit wallet after approval.` });
       this.showWithdraw.set(false);
       this.withdrawAmt = null;
       this.withdrawUpi = '';
       this.bankAccount = '';
       this.bankIfsc = '';
       this.bankHolder = '';
-      this.showSuccess(`Withdrawal of ₹${req.amount.toLocaleString('en-IN')} submitted!`);
+      this.showSuccess(`Withdrawal of ₹${req.amount.toLocaleString('en-IN')} submitted for admin payout!`);
     } catch (e: any) {
       this.withdrawError.set(e?.message || 'Withdrawal failed. Please try again.');
     } finally {

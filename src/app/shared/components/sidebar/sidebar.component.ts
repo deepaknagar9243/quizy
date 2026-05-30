@@ -57,6 +57,14 @@ import { AuthService } from '../../services/auth.service';
           Wallet
         </a>
 
+        <a routerLink="/referrals" routerLinkActive="active" class="sidebar-link" (click)="onNavClick()">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8a3 3 0 11-2.83-2M6 8a3 3 0 102.83-2M12 14a4 4 0 00-4 4v1h8v-1a4 4 0 00-4-4z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13a4 4 0 014 4v1h-3M7 13a4 4 0 00-4 4v1h3"/>
+          </svg>
+          Refer & Earn
+        </a>
+
         <a routerLink="/profile" routerLinkActive="active" class="sidebar-link" (click)="onNavClick()">
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>

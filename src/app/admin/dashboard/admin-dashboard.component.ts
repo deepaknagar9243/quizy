@@ -1,12 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DataService } from '../../shared/services/data.service';
 import { AdminStats } from '../../shared/models/models';
+import { AdminSettingsService } from '../../shared/services/admin-settings.service';
+import { ReferralService } from '../../shared/services/referral.service';
+import { StateService } from '../../shared/services/state.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="fade-in space-y-6">
       <div>
@@ -68,6 +72,24 @@ import { AdminStats } from '../../shared/models/models';
         </div>
       </div>
 
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <a routerLink="/admin/payments" class="stat-card block">
+          <div class="text-muted text-xs mb-2">Pending Payouts</div>
+          <div class="text-2xl font-bold text-orange-600">{{ pendingPayouts }}</div>
+          <div class="text-xs text-muted mt-1">Winner prizes and withdrawals waiting for admin</div>
+        </a>
+        <a routerLink="/admin/payments" class="stat-card block">
+          <div class="text-muted text-xs mb-2">Referral Bonus Config</div>
+          <div class="text-2xl font-bold text-red-600">Rs {{ referralBonus }}</div>
+          <div class="text-xs text-muted mt-1">Friend join bonus: Rs {{ referralJoinBonus }}</div>
+        </a>
+        <a routerLink="/admin/payments" class="stat-card block">
+          <div class="text-muted text-xs mb-2">Referral Records</div>
+          <div class="text-2xl font-bold text-slate-800">{{ referralCount }}</div>
+          <div class="text-xs text-muted mt-1">All successful referral joins</div>
+        </a>
+      </div>
+
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div class="glass-card overflow-hidden">
           <div class="p-5 border-b border-slate-200">
@@ -125,13 +147,26 @@ export class AdminDashboardComponent implements OnInit {
   stats: AdminStats | null = null;
   recentUsers: any[] = [];
   todayQuizzes: any[] = [];
+  pendingPayouts = 0;
+  referralBonus = 0;
+  referralJoinBonus = 0;
+  referralCount = 0;
 
-  constructor(private data: DataService) {}
+  constructor(
+    private data: DataService,
+    private state: StateService,
+    private adminSettings: AdminSettingsService,
+    private referral: ReferralService
+  ) {}
 
   ngOnInit() {
     this.stats = this.data.getAdminStats();
     this.recentUsers = this.data.getAllUsers();
     this.todayQuizzes = this.data.getQuizzes();
+    this.pendingPayouts = this.state.getPendingPayouts().length;
+    this.referralBonus = this.adminSettings.get().referralBonus;
+    this.referralJoinBonus = this.adminSettings.get().referralJoinBonus;
+    this.referralCount = this.referral.getAll().length;
   }
 
   formatAmount(amount: number): string {
