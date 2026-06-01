@@ -26,7 +26,7 @@ import {
 } from '../models/models';
 
 // ── Toggle: true = localStorage mock, false = real Spring Boot backend ────────
-export const USE_MOCK = true;
+export const USE_MOCK = false;
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
