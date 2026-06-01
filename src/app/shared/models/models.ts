@@ -195,6 +195,43 @@ export interface AdminStats {
   pendingWithdrawals: number;
 }
 
+// ─── API Response Wrapper ────────────────────────────────────────────────────
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: Record<string, string[]>;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+export interface LoginRequest {
+  identifier: string;   // email or mobile
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  mobile: string;
+  password: string;
+  referralCode?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  refreshToken?: string;
+  expiresIn: number;    // seconds
+  user: User;
+}
+
 // ─── Notification ─────────────────────────────────────────────────────────────
 export interface AppNotification {
   id: string;

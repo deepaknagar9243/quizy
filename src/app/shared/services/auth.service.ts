@@ -17,6 +17,7 @@ interface PasswordResetRequest {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly KEY = 'qa_user';
+  private readonly TOKEN_KEY = 'qa_token';
   private readonly USERS_KEY = 'qa_users';
   private readonly RESET_KEY = 'qa_password_reset';
 
@@ -293,12 +294,22 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(this.KEY);
+    localStorage.removeItem(this.TOKEN_KEY);
     this.currentUser.set(null);
     this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean { return this.currentUser() !== null; }
   isAdmin(): boolean { return this.currentUser()?.isAdmin === true; }
+
+  // ─── Token helpers (used when backend is connected) ──────────────────────────
+  setToken(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+  }
 
   updateWallet(amount: number): void {
     const user = this.currentUser();

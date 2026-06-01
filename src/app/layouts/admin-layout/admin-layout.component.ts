@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
@@ -8,113 +8,137 @@ import { AuthService } from '../../shared/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="flex h-screen overflow-hidden bg-slate-100">
-<aside
-  [class.translate-x-0]="sidebarOpen"
-  [class.-translate-x-full]="!sidebarOpen"
-  class="fixed lg:static top-0 left-0 h-full
-         z-50 w-64 bg-white
-         border-r border-slate-200
-         transition-transform duration-300
-         lg:translate-x-0 flex flex-col">
-       
-       <div
-  *ngIf="sidebarOpen"
-  class="fixed inset-0 bg-black/40 z-40 lg:hidden"
-  (click)="sidebarOpen=false">
-</div>
+    <div class="flex h-screen h-dvh overflow-hidden bg-slate-100">
 
-       <div class="flex flex-col h-full">
-          <div class="p-5 border-b border-slate-200">
+      <!-- Mobile overlay -->
+      @if (sidebarOpen()) {
+        <div
+          class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          (click)="sidebarOpen.set(false)">
+        </div>
+      }
+
+      <!-- Sidebar -->
+      <aside
+        class="fixed lg:static inset-y-0 left-0 z-50 w-72 lg:w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0"
+        [class.-translate-x-full]="!sidebarOpen()"
+        [class.translate-x-0]="sidebarOpen()">
+
+        <!-- Logo -->
+        <div class="p-5 border-b border-slate-200 flex-shrink-0">
+          <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center flex-shrink-0">
                 <span class="text-white font-bold text-base">A</span>
               </div>
               <div>
-                <div class="text-slate-800 font-bold text-base">Admin Panel</div>
+                <div class="text-slate-800 font-bold text-base leading-tight">Admin Panel</div>
                 <div class="text-red-600 text-xs">QuizArena</div>
               </div>
             </div>
-          </div>
-
-          <nav class="flex-1 p-4 space-y-1">
-            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 mb-3">Management</div>
-
-            <a routerLink="/admin/dashboard" routerLinkActive="active" class="sidebar-link">
+            <!-- Close button (mobile only) -->
+            <button
+              class="lg:hidden p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              (click)="sidebarOpen.set(false)">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
-              Dashboard
-            </a>
-
-            <a routerLink="/admin/quizzes" routerLinkActive="active" class="sidebar-link">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
-              Manage Quizzes
-            </a>
-
-            <a routerLink="/admin/questions" routerLinkActive="active" class="sidebar-link">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Manage Questions
-            </a>
-
-            <a routerLink="/admin/payments" routerLinkActive="active" class="sidebar-link">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a4 4 0 00-8 0v2M5 11h14l-1 9H6l-1-9z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15h6"/>
-              </svg>
-              Payments & Rewards
-            </a>
-
-            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 pt-4 mb-3">Navigation</div>
-
-            <a routerLink="/dashboard" class="sidebar-link">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-              </svg>
-              Back to App
-            </a>
-          </nav>
-
-          <div class="p-4 border-t border-slate-200">
-            <button class="sidebar-link w-full text-red-500 hover:text-red-600 hover:bg-red-50" (click)="logout()">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-              </svg>
-              Logout
             </button>
           </div>
         </div>
+
+        <!-- Nav -->
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 mb-3">Management</div>
+
+          <a routerLink="/admin/dashboard" routerLinkActive="active" class="sidebar-link" (click)="sidebarOpen.set(false)">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+            </svg>
+            Dashboard
+          </a>
+
+          <a routerLink="/admin/quizzes" routerLinkActive="active" class="sidebar-link" (click)="sidebarOpen.set(false)">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Manage Quizzes
+          </a>
+
+          <a routerLink="/admin/questions" routerLinkActive="active" class="sidebar-link" (click)="sidebarOpen.set(false)">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Manage Questions
+          </a>
+
+          <a routerLink="/admin/payments" routerLinkActive="active" class="sidebar-link" (click)="sidebarOpen.set(false)">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
+            Payments & Rewards
+          </a>
+
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 pt-4 mb-3">Navigation</div>
+
+          <a routerLink="/dashboard" class="sidebar-link" (click)="sidebarOpen.set(false)">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to App
+          </a>
+        </nav>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-slate-200 flex-shrink-0">
+          <div class="flex items-center gap-3 mb-3 px-1">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">A</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-slate-800 text-sm font-semibold truncate">Admin User</div>
+              <div class="text-red-600 text-xs">Super Admin</div>
+            </div>
+          </div>
+          <button class="sidebar-link w-full text-red-500 hover:text-red-600 hover:bg-red-50" (click)="logout()">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Logout
+          </button>
+        </div>
       </aside>
 
+      <!-- Main content -->
       <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header class="h-16 flex items-center px-6 border-b border-slate-200 bg-white">
+
+        <!-- Top header -->
+        <header class="h-14 flex items-center px-4 border-b border-slate-200 bg-white flex-shrink-0 sticky top-0 z-30">
           <button
-  class="lg:hidden mr-3"
-  (click)="toggleSidebar()">
+            class="lg:hidden p-2 -ml-1 text-slate-500 rounded-lg hover:bg-slate-100 mr-2"
+            (click)="sidebarOpen.set(true)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
 
-  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 6h16M4 12h16M4 18h16"/>
-  </svg>
-
-</button>
-          <div class="flex items-center gap-3">
-            <span class="text-slate-500 text-sm">Admin</span>
-            <span class="text-slate-300">/</span>
-            <span class="text-slate-800 font-semibold text-sm">Management Console</span>
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center lg:hidden">
+              <span class="text-white font-bold text-xs">A</span>
+            </div>
+            <div class="hidden lg:flex items-center gap-2 text-sm">
+              <span class="text-slate-400">Admin</span>
+              <span class="text-slate-300">/</span>
+              <span class="text-slate-800 font-semibold">Management Console</span>
+            </div>
+            <span class="lg:hidden text-slate-800 font-bold text-sm">Admin Panel</span>
           </div>
-          <div class="ml-auto flex items-center gap-3">
-            <span class="px-2 py-1 rounded bg-red-50 border border-red-200 text-red-600 text-xs font-semibold">ADMIN</span>
+
+          <div class="ml-auto flex items-center gap-2">
+            <span class="px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-bold">ADMIN</span>
             <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-bold text-xs">A</div>
           </div>
         </header>
-        <main class="flex-1 overflow-y-auto p-6">
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-6">
           <router-outlet></router-outlet>
         </main>
       </div>
@@ -122,12 +146,7 @@ import { AuthService } from '../../shared/services/auth.service';
   `
 })
 export class AdminLayoutComponent {
+  sidebarOpen = signal(false);
   constructor(private auth: AuthService) {}
-  
-  sidebarOpen = false;
-
-toggleSidebar() {
-  this.sidebarOpen = !this.sidebarOpen;
-}
   logout() { this.auth.logout(); }
 }
