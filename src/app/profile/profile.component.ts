@@ -43,7 +43,7 @@ import { StateService } from '../shared/services/state.service';
             </div>
           </div>
 
-          <button class="btn-secondary" (click)="editMode.set(!editMode())">
+          <button class="btn-secondary" (click)="startEdit()">
             {{ editMode() ? 'Cancel' : '✎ Edit Profile' }}
           </button>
         </div>
@@ -171,6 +171,18 @@ export class ProfileComponent {
 
   constructor(private auth: AuthService, public state: StateService) {}
 
-  saveProfile() { this.editMode.set(false); }
+  saveProfile() {
+    if (!this.editName.trim()) return;
+    this.auth.updateProfile(this.editName.trim(), this.editMobile.trim());
+    this.editMode.set(false);
+  }
+
+  startEdit() {
+    this.editName = this.user()?.name || '';
+    this.editEmail = this.user()?.email || '';
+    this.editMobile = this.user()?.mobile || '';
+    this.editMode.set(true);
+  }
+
   logout() { this.auth.logout(); }
 }

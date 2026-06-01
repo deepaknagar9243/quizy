@@ -317,6 +317,6 @@ export class AdminQuizzesComponent implements OnInit {
   }
 
   private emptyForm() {
-    return { title: '', category: 'General', status: 'upcoming' as const, entryFee: null as number | null, prizePool: null as number | null, maxParticipants: null as number | null, totalQuestions: 21, startTime: '' };
+    return { title: '', category: 'General', status: 'upcoming' as 'upcoming' | 'live' | 'completed', entryFee: null as number | null, prizePool: null as number | null, maxParticipants: null as number | null, totalQuestions: 21, startTime: '' };
   }
 }
