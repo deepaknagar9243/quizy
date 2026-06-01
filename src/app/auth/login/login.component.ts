@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
+import { USE_MOCK } from '../../shared/services/api.service';
 
 @Component({
   selector: 'app-login',
@@ -131,13 +132,23 @@ export class LoginComponent {
     if (!this.password) { this.error.set('Please enter your password'); return; }
     this.loading.set(true);
     this.error.set('');
+
+    if (!USE_MOCK) {
+      // Real backend — email only (Spring Boot validates email format)
+      this.auth.loginWithBackend(this.email.trim(), this.password)
+        .then(res => {
+          this.loading.set(false);
+          if (!res.success) { this.error.set(res.error || 'Invalid credentials'); return; }
+          this.router.navigate([res.isAdmin ? '/admin/dashboard' : '/dashboard']);
+        });
+      return;
+    }
+
+    // Mock flow
     setTimeout(() => {
       const loggedIn = this.auth.login(this.email.trim(), this.password);
       this.loading.set(false);
-      if (!loggedIn) {
-        this.error.set('Invalid email/mobile or password');
-        return;
-      }
+      if (!loggedIn) { this.error.set('Invalid email/mobile or password'); return; }
       this.router.navigate([this.email.trim().toLowerCase() === 'admin@quiz.com' ? '/admin/dashboard' : '/dashboard']);
     }, 800);
   }

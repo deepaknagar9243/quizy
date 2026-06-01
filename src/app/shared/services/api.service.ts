@@ -1,330 +1,297 @@
 /**
- * ─────────────────────────────────────────────────────────────────
- *  ApiService  —  Single source of truth for ALL backend calls
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  ApiService  —  Exact match with QuizArena Spring Boot backend
  *
- *  HOW TO GO LIVE:
- *    1. Set USE_MOCK = false
- *    2. Set correct apiUrl in src/environments/environment.ts
- *    3. Done — every component works without any change
- * ─────────────────────────────────────────────────────────────────
+ *  Backend base: http://localhost:8080/api
+ *  All responses wrapped in: { success: boolean, message?: string, data: T }
+ *
+ *  TO GO LIVE: Set USE_MOCK = false  (zero component changes needed)
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom, of, delay, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
-  User, Quiz, Question, LeaderboardEntry, Winner, Transaction,
-  AdminStats, ApiResponse, PaginatedResponse,
-  LoginRequest, RegisterRequest, AuthResponse,
-  PaymentRequest, PaymentResponse,
-  WithdrawalRequest, WithdrawalResponse,
+  User, Quiz, Question, LeaderboardEntry, Transaction, AdminStats,
+  ApiSuccess, PagedData, PaginatedResponse,
+  LoginRequest, RegisterRequest,
+  BackendAuthData, BackendUserProfile, BackendQuiz,
+  BackendQuestionDto, BackendQuestionAdminDto, BackendAnswerResult,
+  BackendWalletSummary, BackendTransaction, BackendLeaderboardEntry,
+  BackendAdminStats, BackendParticipation,
+  PaymentRequest, PaymentResponse, WithdrawalRequest, WithdrawalResponse,
   QuizResult
 } from '../models/models';
 
-// ── Toggle: true = dummy data, false = real backend ──────────────
+// ── Toggle: true = localStorage mock, false = real Spring Boot backend ────────
 export const USE_MOCK = true;
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private base = environment.apiUrl;
+  // Spring Boot runs at /api context path
+  private base = environment.apiUrl;           // http://localhost:8080/api/v1
+  private payBase = environment.paymentApiUrl; // http://localhost:8080/api/payment
 
   constructor(private http: HttpClient) {}
 
-  // ════════════════════════════════════════════════════════════════
-  //  AUTH
-  // ════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  //  AUTH  —  /api/auth/*
+  // ════════════════════════════════════════════════════════════════════════════
 
-  login(req: LoginRequest): Promise<AuthResponse> {
-    if (USE_MOCK) return this.mock<AuthResponse>(null as any, 800);
-    return this.post<AuthResponse>('/auth/login', req);
+  /** POST /auth/login  →  { success, data: { accessToken, refreshToken, expiresIn, user } } */
+  login(req: LoginRequest): Promise<BackendAuthData> {
+    if (USE_MOCK) return this.mock<BackendAuthData>(null as any, 800);
+    return this.post<BackendAuthData>('/auth/login', req);
   }
 
-  register(req: RegisterRequest): Promise<AuthResponse> {
-    if (USE_MOCK) return this.mock<AuthResponse>(null as any, 900);
-    return this.post<AuthResponse>('/auth/register', req);
+  /** POST /auth/register */
+  register(req: RegisterRequest): Promise<BackendAuthData> {
+    if (USE_MOCK) return this.mock<BackendAuthData>(null as any, 900);
+    return this.post<BackendAuthData>('/auth/register', req);
   }
 
-  refreshToken(token: string): Promise<{ token: string; expiresIn: number }> {
-    if (USE_MOCK) return this.mock({ token: 'mock_token', expiresIn: 3600 });
-    return this.post('/auth/refresh', { refreshToken: token });
+  /** POST /auth/refresh */
+  refreshToken(refreshToken: string): Promise<BackendAuthData> {
+    if (USE_MOCK) return this.mock<BackendAuthData>(null as any);
+    return this.post<BackendAuthData>('/auth/refresh', { refreshToken });
   }
 
-  requestPasswordReset(identifier: string): Promise<{ success: boolean; message: string }> {
-    if (USE_MOCK) return this.mock({ success: true, message: 'OTP sent' });
-    return this.post('/auth/forgot-password', { identifier });
+  /** GET /auth/me */
+  getMe(): Promise<BackendUserProfile> {
+    if (USE_MOCK) return this.mock<BackendUserProfile>(null as any);
+    return this.get<BackendUserProfile>('/auth/me');
   }
 
-  resetPassword(identifier: string, otp: string, newPassword: string): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true });
-    return this.post('/auth/reset-password', { identifier, otp, newPassword });
+  /** PUT /auth/change-password */
+  changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    if (USE_MOCK) return this.mock<void>(undefined as any, 600);
+    return this.put<void>('/auth/change-password', { currentPassword, newPassword });
   }
 
-  getMe(): Promise<User> {
-    if (USE_MOCK) return this.mock({} as User);
-    return this.get<User>('/auth/me');
+  // ════════════════════════════════════════════════════════════════════════════
+  //  QUIZZES  —  /api/quizzes/*
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /** GET /quizzes?status=UPCOMING&page=0&size=10 */
+  getQuizzes(params?: { status?: string; page?: number; size?: number }): Promise<PagedData<BackendQuiz>> {
+    if (USE_MOCK) return this.mock<PagedData<BackendQuiz>>({ content: [], pageNumber: 0, pageSize: 10, totalElements: 0, totalPages: 0, last: true, first: true });
+    return this.get<PagedData<BackendQuiz>>('/quizzes', params);
   }
 
-  // ════════════════════════════════════════════════════════════════
-  //  QUIZZES
-  // ════════════════════════════════════════════════════════════════
-
-  getQuizzes(params?: { status?: string; category?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Quiz>> {
-    if (USE_MOCK) return this.mock({ data: [], total: 0, page: 1, limit: 10, totalPages: 0 });
-    return this.get<PaginatedResponse<Quiz>>('/quizzes', params);
+  /** GET /quizzes/:id */
+  getQuiz(id: number): Promise<BackendQuiz> {
+    if (USE_MOCK) return this.mock<BackendQuiz>(null as any);
+    return this.get<BackendQuiz>(`/quizzes/${id}`);
   }
 
-  getQuiz(id: string): Promise<Quiz> {
-    if (USE_MOCK) return this.mock({} as Quiz);
-    return this.get<Quiz>(`/quizzes/${id}`);
+  /** POST /quizzes/:id/join */
+  joinQuiz(quizId: number): Promise<BackendParticipation> {
+    if (USE_MOCK) return this.mock<BackendParticipation>(null as any);
+    return this.post<BackendParticipation>(`/quizzes/${quizId}/join`, {});
   }
 
-  getLiveQuiz(): Promise<Quiz | null> {
-    if (USE_MOCK) return this.mock(null);
-    return this.get<Quiz | null>('/quizzes/live');
+  /** GET /quizzes/:id/questions/:index  (0-based, no correct answer) */
+  getQuestion(quizId: number, index: number): Promise<BackendQuestionDto> {
+    if (USE_MOCK) return this.mock<BackendQuestionDto>(null as any);
+    return this.get<BackendQuestionDto>(`/quizzes/${quizId}/questions/${index}`);
   }
 
-  joinQuiz(quizId: string): Promise<{ success: boolean; message: string; entryFeeDeducted: number }> {
-    if (USE_MOCK) return this.mock({ success: true, message: 'Joined', entryFeeDeducted: 75 });
-    return this.post(`/quizzes/${quizId}/join`, {});
+  /** POST /quizzes/:id/answers */
+  submitAnswer(quizId: number, payload: { questionId: number; selectedOptionIndex: number; timeTakenMs: number }): Promise<BackendAnswerResult> {
+    if (USE_MOCK) return this.mock<BackendAnswerResult>(null as any);
+    return this.post<BackendAnswerResult>(`/quizzes/${quizId}/answers`, payload);
   }
 
-  submitAnswer(quizId: string, payload: { questionId: string; answer: number; timeTakenMs: number }): Promise<{ correct: boolean; correctAnswer: number; points: number }> {
-    if (USE_MOCK) return this.mock({ correct: false, correctAnswer: 0, points: 0 });
-    return this.post(`/quizzes/${quizId}/answer`, payload);
+  /** POST /quizzes/:id/complete */
+  completeQuiz(quizId: number): Promise<void> {
+    if (USE_MOCK) return this.mock<void>(undefined as any);
+    return this.post<void>(`/quizzes/${quizId}/complete`, {});
   }
 
-  getQuizResult(quizId: string): Promise<QuizResult> {
-    if (USE_MOCK) return this.mock({} as QuizResult);
-    return this.get<QuizResult>(`/quizzes/${quizId}/result`);
+  /** GET /quizzes/:id/leaderboard */
+  getQuizLeaderboard(quizId: number): Promise<BackendLeaderboardEntry[]> {
+    if (USE_MOCK) return this.mock<BackendLeaderboardEntry[]>([]);
+    return this.get<BackendLeaderboardEntry[]>(`/quizzes/${quizId}/leaderboard`);
   }
 
-  // Admin quiz CRUD
-  createQuiz(data: Partial<Quiz>): Promise<Quiz> {
-    if (USE_MOCK) return this.mock({ ...data, id: 'q_' + Date.now() } as Quiz);
-    return this.post<Quiz>('/admin/quizzes', data);
+  // ════════════════════════════════════════════════════════════════════════════
+  //  WALLET  —  /api/wallet/*
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /** GET /wallet */
+  getWalletSummary(): Promise<BackendWalletSummary> {
+    if (USE_MOCK) return this.mock<BackendWalletSummary>({ balance: 0, totalDeposited: 0, totalWithdrawn: 0, totalEarned: 0, totalSpent: 0 });
+    return this.get<BackendWalletSummary>('/wallet');
   }
 
-  updateQuiz(id: string, data: Partial<Quiz>): Promise<Quiz> {
-    if (USE_MOCK) return this.mock({ ...data, id } as Quiz);
-    return this.patch<Quiz>(`/admin/quizzes/${id}`, data);
+  /** GET /wallet/transactions?page=0&size=20 */
+  getTransactions(params?: { page?: number; size?: number }): Promise<PagedData<BackendTransaction>> {
+    if (USE_MOCK) return this.mock<PagedData<BackendTransaction>>({ content: [], pageNumber: 0, pageSize: 20, totalElements: 0, totalPages: 0, last: true, first: true });
+    return this.get<PagedData<BackendTransaction>>('/wallet/transactions', params);
   }
 
-  deleteQuiz(id: string): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true });
-    return this.delete(`/admin/quizzes/${id}`);
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  QUESTIONS
-  // ════════════════════════════════════════════════════════════════
-
-  getQuestions(quizId: string): Promise<Question[]> {
-    if (USE_MOCK) return this.mock([]);
-    return this.get<Question[]>(`/quizzes/${quizId}/questions`);
-  }
-
-  createQuestion(data: Partial<Question>): Promise<Question> {
-    if (USE_MOCK) return this.mock({ ...data, id: 'qs_' + Date.now() } as Question);
-    return this.post<Question>('/admin/questions', data);
-  }
-
-  updateQuestion(id: string, data: Partial<Question>): Promise<Question> {
-    if (USE_MOCK) return this.mock({ ...data, id } as Question);
-    return this.patch<Question>(`/admin/questions/${id}`, data);
-  }
-
-  deleteQuestion(id: string): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true });
-    return this.delete(`/admin/questions/${id}`);
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  LEADERBOARD
-  // ════════════════════════════════════════════════════════════════
-
-  getLeaderboard(params?: { period?: 'all' | 'weekly' | 'monthly'; page?: number; limit?: number }): Promise<PaginatedResponse<LeaderboardEntry>> {
-    if (USE_MOCK) return this.mock({ data: [], total: 0, page: 1, limit: 20, totalPages: 0 });
-    return this.get<PaginatedResponse<LeaderboardEntry>>('/leaderboard', params);
-  }
-
-  getRecentWinners(): Promise<Winner[]> {
-    if (USE_MOCK) return this.mock([]);
-    return this.get<Winner[]>('/leaderboard/winners');
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  WALLET & TRANSACTIONS
-  // ════════════════════════════════════════════════════════════════
-
-  getWalletBalance(): Promise<{ walletBalance: number; bonusBalance: number }> {
-    if (USE_MOCK) return this.mock({ walletBalance: 0, bonusBalance: 0 });
-    return this.get('/wallet/balance');
-  }
-
-  getTransactions(params?: { type?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Transaction>> {
-    if (USE_MOCK) return this.mock({ data: [], total: 0, page: 1, limit: 20, totalPages: 0 });
-    return this.get<PaginatedResponse<Transaction>>('/wallet/transactions', params);
-  }
-
-  // ── Deposit (mock simulates 95% success) ──────────────────────
-  initiateDeposit(req: PaymentRequest): Promise<PaymentResponse> {
+  /** POST /wallet/deposit */
+  initiateDeposit(req: PaymentRequest): Promise<BackendTransaction> {
     if (USE_MOCK) {
       return new Promise((resolve, reject) =>
         setTimeout(() =>
           Math.random() > 0.05
-            ? resolve({ success: true, transactionId: 'TXN' + Date.now(), message: 'Payment successful', amount: req.amount })
+            ? resolve({ id: Date.now(), type: 'DEPOSIT', amount: req.amount, description: 'Wallet deposit', status: 'SUCCESS', createdAt: new Date().toISOString() })
             : reject(new Error('Payment gateway timeout. Please try again.')),
           1500)
       );
     }
-    return this.post<PaymentResponse>('/wallet/deposit', req);
+    return this.post<BackendTransaction>('/wallet/deposit', { amount: req.amount, paymentMethod: req.method.toUpperCase(), upiId: req.upiId });
   }
 
-  // ── Razorpay: backend creates order → frontend opens SDK ──────
-  createRazorpayOrder(amount: number): Promise<{ orderId: string; amount: number; currency: string; keyId: string }> {
-    if (USE_MOCK) return this.mock({ orderId: 'order_' + Date.now(), amount, currency: 'INR', keyId: environment.razorpayKey });
-    return this.post('/payments/razorpay/order', { amount });
-  }
-
-  verifyRazorpayPayment(payload: { orderId: string; paymentId: string; signature: string }): Promise<PaymentResponse> {
-    if (USE_MOCK) return this.mock({ success: true, transactionId: payload.paymentId, message: 'Payment verified', amount: 0 });
-    return this.post<PaymentResponse>('/payments/razorpay/verify', payload);
-  }
-
-  // ── Withdrawal ────────────────────────────────────────────────
-  initiateWithdrawal(req: WithdrawalRequest): Promise<WithdrawalResponse> {
+  /** POST /wallet/withdraw */
+  initiateWithdrawal(req: WithdrawalRequest): Promise<BackendTransaction> {
     if (USE_MOCK) {
       return new Promise((resolve, reject) =>
         setTimeout(() =>
           req.amount < 100
             ? reject(new Error('Minimum withdrawal is ₹100'))
-            : resolve({ success: true, referenceId: 'WD' + Date.now(), message: 'Withdrawal request submitted', estimatedTime: '24-48 hours' }),
+            : resolve({ id: Date.now(), type: 'WITHDRAWAL', amount: req.amount, description: 'Withdrawal request', status: 'PENDING', createdAt: new Date().toISOString() }),
           1200)
       );
     }
-    return this.post<WithdrawalResponse>('/wallet/withdraw', req);
+    return this.post<BackendTransaction>('/wallet/withdraw', req);
   }
 
-  // ════════════════════════════════════════════════════════════════
-  //  REFERRALS
-  // ════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  //  RAZORPAY  —  /api/payment/*  (separate context, no /v1)
+  // ════════════════════════════════════════════════════════════════════════════
 
-  validateReferralCode(code: string): Promise<{ valid: boolean; reason?: string; referrerName?: string }> {
-    if (USE_MOCK) return this.mock({ valid: true, referrerName: 'Demo User' });
-    return this.get('/referrals/validate', { code });
-  }
-
-  getReferralStats(): Promise<{ code: string; totalReferrals: number; totalEarned: number; records: any[] }> {
-    if (USE_MOCK) return this.mock({ code: '', totalReferrals: 0, totalEarned: 0, records: [] });
-    return this.get('/referrals/stats');
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  //  PROFILE & KYC
-  // ════════════════════════════════════════════════════════════════
-
-  updateProfile(data: Partial<Pick<User, 'name' | 'mobile'>>): Promise<User> {
-    if (USE_MOCK) return this.mock({} as User, 600);
-    return this.patch<User>('/users/me', data);
-  }
-
-  changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true }, 600);
-    return this.post('/users/me/change-password', { currentPassword, newPassword });
-  }
-
-  uploadAvatar(file: File): Promise<{ avatarUrl: string }> {
-    if (USE_MOCK) return this.mock({ avatarUrl: '' }, 800);
-    const form = new FormData();
-    form.append('avatar', file);
+  /** POST /payment/create-order */
+  createRazorpayOrder(amount: number): Promise<{ orderId: string; amount: number; currency: string }> {
+    if (USE_MOCK) return this.mock({ orderId: 'order_' + Date.now(), amount, currency: 'INR' });
     return firstValueFrom(
-      this.http.post<{ avatarUrl: string }>(`${this.base}/users/me/avatar`, form).pipe(
-        catchError(e => throwError(() => new Error(e.error?.message || 'Upload failed')))
-      )
+      this.http.post<{ orderId: string; amount: number; currency: string }>(
+        `${this.payBase}/create-order`, { amount }
+      ).pipe(catchError(e => throwError(() => new Error(e.error?.message || 'Order creation failed'))))
     );
   }
 
-  submitKyc(data: { docType: string; docNumber: string; frontImage: File; backImage?: File }): Promise<{ success: boolean; message: string }> {
-    if (USE_MOCK) return this.mock({ success: true, message: 'KYC submitted for review' }, 1000);
-    const form = new FormData();
-    form.append('docType', data.docType);
-    form.append('docNumber', data.docNumber);
-    form.append('front', data.frontImage);
-    if (data.backImage) form.append('back', data.backImage);
+  /** POST /payment/verify */
+  verifyRazorpayPayment(payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }): Promise<{ success: boolean; message: string }> {
+    if (USE_MOCK) return this.mock({ success: true, message: 'Payment verified' });
     return firstValueFrom(
-      this.http.post<{ success: boolean; message: string }>(`${this.base}/kyc/submit`, form).pipe(
-        catchError(e => throwError(() => new Error(e.error?.message || 'KYC submission failed')))
-      )
+      this.http.post<{ success: boolean; message: string }>(
+        `${this.payBase}/verify`, payload
+      ).pipe(catchError(e => throwError(() => new Error(e.error?.message || 'Verification failed'))))
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
-  //  ADMIN
-  // ════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  //  USER  —  /api/users/*
+  // ════════════════════════════════════════════════════════════════════════════
 
-  getAdminStats(): Promise<AdminStats> {
-    if (USE_MOCK) return this.mock({} as AdminStats);
-    return this.get<AdminStats>('/admin/stats');
+  /** GET /users/me */
+  getUserProfile(): Promise<BackendUserProfile> {
+    if (USE_MOCK) return this.mock<BackendUserProfile>(null as any);
+    return this.get<BackendUserProfile>('/users/me');
   }
 
-  getAdminUsers(params?: { page?: number; limit?: number; search?: string }): Promise<PaginatedResponse<User>> {
-    if (USE_MOCK) return this.mock({ data: [], total: 0, page: 1, limit: 20, totalPages: 0 });
-    return this.get<PaginatedResponse<User>>('/admin/users', params);
+  /** PUT /users/me */
+  updateProfile(data: { name: string; mobile: string }): Promise<BackendUserProfile> {
+    if (USE_MOCK) return this.mock<BackendUserProfile>(null as any, 600);
+    return this.put<BackendUserProfile>('/users/me', data);
   }
 
-  getPendingWithdrawals(): Promise<Transaction[]> {
-    if (USE_MOCK) return this.mock([]);
-    return this.get<Transaction[]>('/admin/withdrawals/pending');
+  /** GET /users/me/history */
+  getUserHistory(params?: { page?: number; size?: number }): Promise<PagedData<BackendParticipation>> {
+    if (USE_MOCK) return this.mock<PagedData<BackendParticipation>>({ content: [], pageNumber: 0, pageSize: 10, totalElements: 0, totalPages: 0, last: true, first: true });
+    return this.get<PagedData<BackendParticipation>>('/users/me/history', params);
   }
 
-  approveWithdrawal(txId: string): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true });
-    return this.post(`/admin/withdrawals/${txId}/approve`, {});
+  /** GET /users/leaderboard */
+  getGlobalLeaderboard(params?: { page?: number; size?: number }): Promise<PagedData<BackendLeaderboardEntry>> {
+    if (USE_MOCK) return this.mock<PagedData<BackendLeaderboardEntry>>({ content: [], pageNumber: 0, pageSize: 20, totalElements: 0, totalPages: 0, last: true, first: true });
+    return this.get<PagedData<BackendLeaderboardEntry>>('/users/leaderboard', params);
   }
 
-  rejectWithdrawal(txId: string, reason: string): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true });
-    return this.post(`/admin/withdrawals/${txId}/reject`, { reason });
+  // ════════════════════════════════════════════════════════════════════════════
+  //  ADMIN  —  /api/admin/*
+  // ════════════════════════════════════════════════════════════════════════════
+
+  /** GET /admin/stats */
+  getAdminStats(): Promise<BackendAdminStats> {
+    if (USE_MOCK) return this.mock<BackendAdminStats>(null as any);
+    return this.get<BackendAdminStats>('/admin/stats');
   }
 
-  getAdminSettings(): Promise<any> {
-    if (USE_MOCK) return this.mock({});
-    return this.get('/admin/settings');
+  /** GET /admin/users */
+  getAdminUsers(params?: { search?: string; page?: number; size?: number }): Promise<PagedData<BackendUserProfile>> {
+    if (USE_MOCK) return this.mock<PagedData<BackendUserProfile>>({ content: [], pageNumber: 0, pageSize: 20, totalElements: 0, totalPages: 0, last: true, first: true });
+    return this.get<PagedData<BackendUserProfile>>('/admin/users', params);
   }
 
-  saveAdminSettings(settings: any): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true });
-    return this.patch('/admin/settings', settings);
+  /** POST /admin/quizzes */
+  createQuiz(data: any): Promise<BackendQuiz> {
+    if (USE_MOCK) return this.mock<BackendQuiz>({ ...data, id: Date.now() });
+    return this.post<BackendQuiz>('/admin/quizzes', data);
   }
 
-  // ════════════════════════════════════════════════════════════════
-  //  NOTIFICATIONS
-  // ════════════════════════════════════════════════════════════════
-
-  getNotifications(params?: { page?: number; limit?: number }): Promise<PaginatedResponse<any>> {
-    if (USE_MOCK) return this.mock({ data: [], total: 0, page: 1, limit: 20, totalPages: 0 });
-    return this.get('/notifications', params);
+  /** PUT /admin/quizzes/:id */
+  updateQuiz(id: number, data: any): Promise<BackendQuiz> {
+    if (USE_MOCK) return this.mock<BackendQuiz>({ ...data, id });
+    return this.put<BackendQuiz>(`/admin/quizzes/${id}`, data);
   }
 
-  markNotificationsRead(): Promise<{ success: boolean }> {
-    if (USE_MOCK) return this.mock({ success: true });
-    return this.post('/notifications/read-all', {});
+  /** DELETE /admin/quizzes/:id */
+  deleteQuiz(id: number): Promise<void> {
+    if (USE_MOCK) return this.mock<void>(undefined as any);
+    return this.delete<void>(`/admin/quizzes/${id}`);
   }
 
-  // ════════════════════════════════════════════════════════════════
-  //  PRIVATE HTTP HELPERS
-  // ════════════════════════════════════════════════════════════════
+  /** GET /admin/quizzes/:id/questions  (with correct answers) */
+  getAdminQuestions(quizId: number): Promise<BackendQuestionAdminDto[]> {
+    if (USE_MOCK) return this.mock<BackendQuestionAdminDto[]>([]);
+    return this.get<BackendQuestionAdminDto[]>(`/admin/quizzes/${quizId}/questions`);
+  }
+
+  /** POST /admin/questions */
+  createQuestion(data: any): Promise<BackendQuestionAdminDto> {
+    if (USE_MOCK) return this.mock<BackendQuestionAdminDto>({ ...data, id: Date.now() });
+    return this.post<BackendQuestionAdminDto>('/admin/questions', data);
+  }
+
+  /** PUT /admin/questions/:id */
+  updateQuestion(id: number, data: any): Promise<BackendQuestionAdminDto> {
+    if (USE_MOCK) return this.mock<BackendQuestionAdminDto>({ ...data, id });
+    return this.put<BackendQuestionAdminDto>(`/admin/questions/${id}`, data);
+  }
+
+  /** DELETE /admin/questions/:id */
+  deleteQuestion(id: number): Promise<void> {
+    if (USE_MOCK) return this.mock<void>(undefined as any);
+    return this.delete<void>(`/admin/questions/${id}`);
+  }
+
+  /** PATCH /admin/users/:id/deactivate */
+  deactivateUser(userId: number): Promise<void> {
+    if (USE_MOCK) return this.mock<void>(undefined as any);
+    return this.patch<void>(`/admin/users/${userId}/deactivate`, {});
+  }
+
+  /** PATCH /admin/users/:id/activate */
+  activateUser(userId: number): Promise<void> {
+    if (USE_MOCK) return this.mock<void>(undefined as any);
+    return this.patch<void>(`/admin/users/${userId}/activate`, {});
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  //  PRIVATE HTTP HELPERS  —  auto-unwrap { success, data } wrapper
+  // ════════════════════════════════════════════════════════════════════════════
 
   private get<T>(path: string, params?: Record<string, any>): Promise<T> {
-    let httpParams = new HttpParams();
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) httpParams = httpParams.set(k, String(v));
-      });
-    }
+    let p = new HttpParams();
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v != null) p = p.set(k, String(v)); });
     return firstValueFrom(
-      this.http.get<T>(`${this.base}${path}`, { params: httpParams }).pipe(
+      this.http.get<ApiSuccess<T>>(`${this.base}${path}`, { params: p }).pipe(
+        map(r => r.data),
         catchError(e => throwError(() => new Error(e.error?.message || e.message || 'Request failed')))
       )
     );
@@ -332,7 +299,17 @@ export class ApiService {
 
   private post<T>(path: string, body: any): Promise<T> {
     return firstValueFrom(
-      this.http.post<T>(`${this.base}${path}`, body).pipe(
+      this.http.post<ApiSuccess<T>>(`${this.base}${path}`, body).pipe(
+        map(r => r.data),
+        catchError(e => throwError(() => new Error(e.error?.message || e.message || 'Request failed')))
+      )
+    );
+  }
+
+  private put<T>(path: string, body: any): Promise<T> {
+    return firstValueFrom(
+      this.http.put<ApiSuccess<T>>(`${this.base}${path}`, body).pipe(
+        map(r => r.data),
         catchError(e => throwError(() => new Error(e.error?.message || e.message || 'Request failed')))
       )
     );
@@ -340,7 +317,8 @@ export class ApiService {
 
   private patch<T>(path: string, body: any): Promise<T> {
     return firstValueFrom(
-      this.http.patch<T>(`${this.base}${path}`, body).pipe(
+      this.http.patch<ApiSuccess<T>>(`${this.base}${path}`, body).pipe(
+        map(r => r.data),
         catchError(e => throwError(() => new Error(e.error?.message || e.message || 'Request failed')))
       )
     );
@@ -348,13 +326,14 @@ export class ApiService {
 
   private delete<T>(path: string): Promise<T> {
     return firstValueFrom(
-      this.http.delete<T>(`${this.base}${path}`).pipe(
+      this.http.delete<ApiSuccess<T>>(`${this.base}${path}`).pipe(
+        map(r => r.data),
         catchError(e => throwError(() => new Error(e.error?.message || e.message || 'Request failed')))
       )
     );
   }
 
-  private mock<T>(data: T, delayMs = 300): Promise<T> {
-    return firstValueFrom(of(data).pipe(delay(delayMs)));
+  private mock<T>(data: T, ms = 300): Promise<T> {
+    return firstValueFrom(of(data).pipe(delay(ms)));
   }
 }

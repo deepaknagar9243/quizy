@@ -355,7 +355,7 @@ export class WalletComponent implements OnInit {
         amount: this.depositAmt,
         description: `Wallet deposit via ${this.depositMethod.toUpperCase()}`,
         status: 'success',
-        reference: res.transactionId,
+        reference: String(res.id),
         paymentMethod: this.depositMethod
       });
       this.state.addNotification({ type: 'deposit', title: 'Money Added', message: `₹${this.depositAmt.toLocaleString('en-IN')} added to your wallet` });
@@ -399,7 +399,7 @@ export class WalletComponent implements OnInit {
         amount: -this.withdrawAmt,
         description: `Withdrawal via ${this.withdrawMethod === 'upi' ? 'UPI' : 'Bank Transfer'}`,
         status: 'pending',
-        reference: res.referenceId
+        reference: String(res.id)
       });
       this.state.addNotification({ type: 'withdrawal', title: 'Withdrawal Requested', message: `₹${this.withdrawAmt.toLocaleString('en-IN')} withdrawal requested. Admin will pay and debit wallet after approval.` });
       this.showWithdraw.set(false);

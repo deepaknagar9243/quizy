@@ -5,8 +5,8 @@ export interface User {
   email: string;
   mobile: string;
   avatar: string;
-  walletBalance: number;       // real money (withdrawable)
-  bonusBalance: number;        // bonus/referral (NOT withdrawable)
+  walletBalance: number;
+  bonusBalance: number;
   totalWins: number;
   totalQuizzes: number;
   totalEarnings: number;
@@ -32,6 +32,8 @@ export interface Quiz {
   maxParticipants: number;
   totalQuestions: number;
   duration: number;
+  hasJoined?: boolean;
+  description?: string;
   prizeDistribution?: PrizeDistribution[];
 }
 
@@ -51,6 +53,9 @@ export interface Question {
   correctAnswer: number;
   timeLimit: number;
   points: number;
+  questionOrder?: number;
+  totalQuestions?: number;
+  explanation?: string;
 }
 
 // ─── Quiz Result ──────────────────────────────────────────────────────────────
@@ -68,7 +73,7 @@ export interface QuizResult {
   completedAt: string;
 }
 
-// ─── Live Player (during quiz) ────────────────────────────────────────────────
+// ─── Live Player ──────────────────────────────────────────────────────────────
 export interface LivePlayer {
   rank: number;
   userId: string;
@@ -103,7 +108,7 @@ export interface Transaction {
   status: 'success' | 'pending' | 'failed';
   reference?: string;
   paymentMethod?: string;
-  isBonus?: boolean;           // bonus = not withdrawable
+  isBonus?: boolean;
 }
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
@@ -155,13 +160,13 @@ export interface Winner {
 
 // ─── Admin Settings ───────────────────────────────────────────────────────────
 export interface AdminSettings {
-  registrationBonus: number;       // e.g. 50 — given on signup (bonus, not withdrawable)
-  referralBonus: number;           // e.g. 25 — given to referrer per successful referral
-  referralJoinBonus: number;       // e.g. 25 — given to new user who joined via referral
+  registrationBonus: number;
+  referralBonus: number;
+  referralJoinBonus: number;
   referralCodeValidityHours: number;
-  minWithdrawal: number;           // e.g. 100
-  maxWithdrawal: number;           // e.g. 50000
-  bonusWithdrawable: boolean;      // always false — bonus can't be withdrawn
+  minWithdrawal: number;
+  maxWithdrawal: number;
+  bonusWithdrawable: boolean;
 }
 
 // ─── Referral ─────────────────────────────────────────────────────────────────
@@ -195,12 +200,31 @@ export interface AdminStats {
   pendingWithdrawals: number;
 }
 
-// ─── API Response Wrapper ────────────────────────────────────────────────────
-export interface ApiResponse<T> {
+// ─── Notification ─────────────────────────────────────────────────────────────
+export interface AppNotification {
+  id: string;
+  type: 'prize' | 'deposit' | 'withdrawal' | 'quiz' | 'system' | 'referral' | 'bonus';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+// ─── API Response Wrappers (matches Spring Boot backend) ─────────────────────
+export interface ApiSuccess<T> {
   success: boolean;
-  data: T;
   message?: string;
-  errors?: Record<string, string[]>;
+  data: T;
+}
+
+export interface PagedData<T> {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -211,9 +235,9 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
+// ─── Backend Auth DTOs (exact match with Spring Boot) ────────────────────────
 export interface LoginRequest {
-  identifier: string;   // email or mobile
+  email: string;       // backend uses 'email' field
   password: string;
 }
 
@@ -225,19 +249,136 @@ export interface RegisterRequest {
   referralCode?: string;
 }
 
-export interface AuthResponse {
-  token: string;
+// Backend AuthData response shape
+export interface BackendAuthData {
+  accessToken: string;
   refreshToken?: string;
-  expiresIn: number;    // seconds
-  user: User;
+  tokenType: string;
+  expiresIn: number;
+  user: BackendUserProfile;
 }
 
-// ─── Notification ─────────────────────────────────────────────────────────────
-export interface AppNotification {
-  id: string;
-  type: 'prize' | 'deposit' | 'withdrawal' | 'quiz' | 'system' | 'referral' | 'bonus';
-  title: string;
-  message: string;
-  read: boolean;
+export interface BackendUserProfile {
+  id: number;
+  name: string;
+  email: string;
+  mobile: string;
+  role: string;
+  walletBalance: number;
+  totalWins: number;
+  totalQuizzes: number;
+  isActive: boolean;
   createdAt: string;
+}
+
+// Backend Quiz shape (uses numbers for IDs, BigDecimal as number)
+export interface BackendQuiz {
+  id: number;
+  title: string;
+  description?: string;
+  category: string;
+  entryFee: number;
+  prizePool: number;
+  startTime: string;
+  endTime?: string;
+  status: string;
+  maxParticipants: number;
+  totalParticipants: number;
+  durationMinutes: number;
+  timePerQuestion: number;
+  totalQuestions: number;
+  hasJoined?: boolean;
+}
+
+// Backend Question shape (live quiz — no correctAnswer)
+export interface BackendQuestionDto {
+  id: number;
+  text: string;
+  options: string[];
+  timeLimit: number;
+  points: number;
+  questionOrder: number;
+  totalQuestions: number;
+}
+
+// Backend Question shape (admin — has correctAnswer)
+export interface BackendQuestionAdminDto {
+  id: number;
+  quizId: number;
+  text: string;
+  options: string[];
+  correctAnswerIndex: number;
+  timeLimit: number;
+  points: number;
+  questionOrder: number;
+  explanation?: string;
+  createdAt: string;
+}
+
+// Backend Answer Result
+export interface BackendAnswerResult {
+  questionId: number;
+  isCorrect: boolean;
+  correctAnswerIndex: number;
+  pointsEarned: number;
+  totalScore: number;
+  explanation?: string;
+}
+
+// Backend Wallet Summary
+export interface BackendWalletSummary {
+  balance: number;
+  totalDeposited: number;
+  totalWithdrawn: number;
+  totalEarned: number;
+  totalSpent: number;
+}
+
+// Backend Transaction
+export interface BackendTransaction {
+  id: number;
+  type: string;
+  amount: number;
+  description: string;
+  status: string;
+  paymentMethod?: string;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  createdAt: string;
+}
+
+// Backend Leaderboard Entry
+export interface BackendLeaderboardEntry {
+  rank: number;
+  userId: number;
+  name: string;
+  score: number;
+  correctAnswers: number;
+  prizeWon: number;
+}
+
+// Backend Admin Stats
+export interface BackendAdminStats {
+  totalUsers: number;
+  totalQuizzes: number;
+  activeQuizzes: number;
+  totalParticipations: number;
+  totalRevenue: number;
+  todaySignups: number;
+  todayRevenue: number;
+}
+
+// Backend Participation
+export interface BackendParticipation {
+  id: number;
+  quizId: number;
+  quizTitle: string;
+  score: number;
+  correctAnswers: number;
+  totalAnswered: number;
+  finalRank?: number;
+  prizeWon: number;
+  status: string;
+  joinedAt: string;
+  completedAt?: string;
 }

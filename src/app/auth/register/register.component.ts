@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
 import { ReferralService } from '../../shared/services/referral.service';
+import { USE_MOCK } from '../../shared/services/api.service';
 
 @Component({
   selector: 'app-register',
@@ -152,30 +153,30 @@ export class RegisterComponent implements OnInit {
     if (this.mobile.length !== 10 || !/^\d+$/.test(this.mobile)) { this.error.set('Enter a valid 10-digit mobile number'); return; }
     if (!this.email.includes('@')) { this.error.set('Enter a valid email address'); return; }
     if (this.password.length < 6) { this.error.set('Password must be at least 6 characters'); return; }
-    if (this.referralCode.trim()) {
-      const referral = this.referral.validateCode(this.referralCode);
-      if (!referral.valid) {
-        this.error.set(referral.reason || 'Invalid referral code');
-        return;
-      }
-    }
     if (!this.agreed) { this.error.set('Please accept the terms to continue'); return; }
+
+    if (this.referralCode.trim() && USE_MOCK) {
+      const ref = this.referral.validateCode(this.referralCode);
+      if (!ref.valid) { this.error.set(ref.reason || 'Invalid referral code'); return; }
+    }
 
     this.loading.set(true);
     this.error.set('');
+
+    if (!USE_MOCK) {
+      this.auth.registerWithBackend(this.name.trim(), this.email.trim(), this.mobile, this.password, this.referralCode.trim() || undefined)
+        .then(res => {
+          this.loading.set(false);
+          if (!res.success) { this.error.set(res.error || 'Registration failed'); return; }
+          this.router.navigate(['/dashboard']);
+        });
+      return;
+    }
+
     setTimeout(() => {
-      const registered = this.auth.register(
-        this.name.trim(),
-        this.email.trim(),
-        this.mobile,
-        this.password,
-        this.referralCode.trim()
-      );
+      const registered = this.auth.register(this.name.trim(), this.email.trim(), this.mobile, this.password, this.referralCode.trim());
       this.loading.set(false);
-      if (!registered) {
-        this.error.set('An account with this email or mobile already exists');
-        return;
-      }
+      if (!registered) { this.error.set('An account with this email or mobile already exists'); return; }
       this.router.navigate(['/dashboard']);
     }, 900);
   }

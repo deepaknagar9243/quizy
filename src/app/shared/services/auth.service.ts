@@ -37,12 +37,13 @@ export class AuthService {
   getRefreshToken(): string | null { return localStorage.getItem(this.RTOKEN_KEY); }
 
   // ── Backend login (USE_MOCK=false) ───────────────────────────────
-  async loginWithBackend(identifier: string, password: string): Promise<{ success: boolean; error?: string }> {
+  async loginWithBackend(email: string, password: string): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> {
     try {
-      const res = await this.api.login({ identifier, password });
-      this.setToken(res.token, res.refreshToken);
-      this.persist(res.user);
-      return { success: true };
+      const res = await this.api.login({ email, password });
+      this.setToken(res.accessToken, res.refreshToken);
+      const user = this.mapBackendUser(res.user);
+      this.persist(user);
+      return { success: true, isAdmin: user.isAdmin };
     } catch (e: any) {
       return { success: false, error: e.message || 'Login failed' };
     }
@@ -51,12 +52,34 @@ export class AuthService {
   async registerWithBackend(name: string, email: string, mobile: string, password: string, referralCode?: string): Promise<{ success: boolean; error?: string }> {
     try {
       const res = await this.api.register({ name, email, mobile, password, referralCode });
-      this.setToken(res.token, res.refreshToken);
-      this.persist(res.user);
+      this.setToken(res.accessToken, res.refreshToken);
+      const user = this.mapBackendUser(res.user);
+      this.persist(user);
       return { success: true };
     } catch (e: any) {
       return { success: false, error: e.message || 'Registration failed' };
     }
+  }
+
+  // Maps Spring Boot UserProfile → frontend User
+  private mapBackendUser(bp: any): User {
+    const initials = (bp.name || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    return {
+      id: String(bp.id),
+      name: bp.name,
+      email: bp.email,
+      mobile: bp.mobile || '',
+      avatar: initials,
+      walletBalance: Number(bp.walletBalance || 0),
+      bonusBalance: 0,
+      totalWins: bp.totalWins || 0,
+      totalQuizzes: bp.totalQuizzes || 0,
+      totalEarnings: 0,
+      rank: 999,
+      isAdmin: bp.role === 'ADMIN' || bp.role === 'ROLE_ADMIN',
+      kycVerified: bp.isActive || false,
+      createdAt: bp.createdAt
+    };
   }
 
   // ── Local (mock) helpers ─────────────────────────────────────────
