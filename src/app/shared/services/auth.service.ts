@@ -123,7 +123,7 @@ export class AuthService {
       avatar: 'RK', walletBalance: 3750, bonusBalance: 50, totalWins: 8,
       totalQuizzes: 24, totalEarnings: 8550, rank: 47, isAdmin: false,
       kycVerified: true, referralCode: code, referralCount: 0,
-      createdAt: new Date().toISOString(), password: 'demo123'
+      createdAt: new Date().toISOString(), password: 'demo@123'
     };
     users.push(demo);
     this.saveUsers(users);
